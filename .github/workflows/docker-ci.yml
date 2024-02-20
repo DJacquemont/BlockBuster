@@ -1,0 +1,30 @@
+name: Docker CI
+
+on:
+  push:
+    branches:
+      - CI_test
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build Docker image
+      run: |
+        docker buildx create --use
+        docker buildx build --platform linux/amd64,linux/arm64 -t robotOS:latest .
+
+    - name: Push Docker image to registry
+      run: |
+        echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+        docker push robotOS:latest
