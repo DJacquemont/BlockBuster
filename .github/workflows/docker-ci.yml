@@ -11,6 +11,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: |
+          /var/lib/docker
+          /root/.docker
+        key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile') }}
+
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
 
