@@ -18,6 +18,6 @@ docker exec -it <container ID> bash
 ```
 The container ID can be found with `docker ps`, this command displays all the containers (active and inactive).
 
-To run the LIDAR's demo, please refer to the [rplidar_ros2]([/guides/content/editing-an-existing-page](https://github.com/babakhani/rplidar_ros2)https://github.com/babakhani/rplidar_ros2) repository.
+To run the LIDAR's demo, please refer to the [rplidar_ros2](https://github.com/babakhani/rplidar_ros2) repository.
 
 
