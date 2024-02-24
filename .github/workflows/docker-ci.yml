@@ -1,10 +1,6 @@
 name: Docker CI
 
 on:
-  push:
-    branches:
-      - main
-      - testing-CI
   pull_request:
     branches:
       - main
