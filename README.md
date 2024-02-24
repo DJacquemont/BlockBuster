@@ -23,10 +23,10 @@ To open a new terminal in the same container:
 ```
 docker exec -it <container ID> bash
 ```
+
 The container ID can be found with `docker ps`, this command displays all the containers (active and inactive). In all terminal of the docker container, ros and the built package(s) are already built and sourced thanks to the **.bashrc** file.
 
 To run the LIDAR's demo, please refer to the [rplidar_ros2](https://github.com/babakhani/rplidar_ros2) repository.
-
 
 ### Relevant Commands for ROS2
 
@@ -38,6 +38,3 @@ colcon build --symlink-install
 source /colcon_ws/install/setup.bash
 ```
 To start RQT, run `rqt` in a sourced terminal.
-
-
-
