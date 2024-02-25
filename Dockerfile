@@ -15,8 +15,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install ROS2 packages
-RUN apt-get update && apt-get install -y \
-    ros-humble-gazebo-* \
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+        apt-get update && apt-get install -y \
+        ros-humble-gazebo-*; \
+    fi \
+    && apt-get update && apt-get install -y \
     ros-humble-ros2-control \
     ros-humble-ros2-controllers \
     ros-humble-xacro \
