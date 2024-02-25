@@ -1,5 +1,7 @@
 FROM ros:humble-ros-base
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install required packages
 RUN apt-get update && apt-get install -y \
     python3-pip \
@@ -12,10 +14,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sSL http://get.gazebosim.org | sh
-
 # Install ROS2 packages
 RUN apt-get update && apt-get install -y \
+    ros-humble-gazebo-* \
     ros-humble-ros2-control \
     ros-humble-ros2-controllers \
     ros-humble-xacro \
@@ -27,7 +28,6 @@ RUN apt-get update && apt-get install -y \
     ros-humble-twist-mux \
     ros-humble-rqt \
     ros-humble-turtlebot3* \
-    ros-humble-gazebo-* \
     && rm -rf /var/lib/apt/lists/*
 
 # Create colcon workspace and clone the rplidar_ros2 project
