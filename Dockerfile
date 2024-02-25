@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     git \
     iproute2 \
     usbutils \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Gazebo packages
