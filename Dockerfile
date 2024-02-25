@@ -19,13 +19,17 @@ RUN apt-get update && apt-get install -y \
     ros-humble-navigation2 \
     ros-humble-nav2-bringup \
     ros-humble-nav2-rviz-plugins \
+    ros-humble-teleop-twist-keyboard \
+    ros-humble-twist-mux \
     ros-humble-rqt \
     ros-humble-turtlebot3* \
+    ros-humble-gazebo-* \
     && rm -rf /var/lib/apt/lists/*
 
 # Create colcon workspace and clone the rplidar_ros2 project
 WORKDIR /colcon_ws/src
 RUN git clone https://github.com/babakhani/rplidar_ros2.git
+COPY articubot_one articubot_one
 
 RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
@@ -33,6 +37,7 @@ RUN apt-get update && apt-get install -y \
 # Add lines to source setup.bash in bashrc
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
 RUN echo "source /colcon_ws/install/setup.bash" >> /root/.bashrc
+RUN echo "source /usr/share/gazebo/setup.sh" >> /root/.bashrc
 
 # Add lines to show folder contents on cd
 RUN echo 'cd() {' >> /root/.bashrc

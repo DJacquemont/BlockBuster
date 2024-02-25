@@ -1,0 +1,4 @@
+teleop_node:
+  ros__parameters:
+    scale_linear: 0.5  # adjust this value as needed
+    scale_angular: 1.0  # adjust this value as needed
