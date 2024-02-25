@@ -37,7 +37,7 @@ The container name (or container ID) can be found with `docker ps`, this command
 
 To run the LIDAR's demo, please refer to the [rplidar_ros2](https://github.com/babakhani/rplidar_ros2) repository.
 
-#### Robot Simulation
+#### Robot Simulation (ONLY for AMD64 architecture)
 
 Start a teleoperation node in a terminal:
 ```
