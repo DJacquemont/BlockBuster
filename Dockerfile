@@ -9,15 +9,10 @@ RUN apt-get update && apt-get install -y \
     iproute2 \
     usbutils \
     wget \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Gazebo packages
-RUN echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list
-RUN wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
-RUN apt-get update && apt-get install -y \
-    gazebo11 \
-    libgazebo11-dev \
-    && rm -rf /var/lib/apt/lists/*
+RUN curl -sSL http://get.gazebosim.org | sh
 
 # Install ROS2 packages
 RUN apt-get update && apt-get install -y \
@@ -39,9 +34,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /colcon_ws/src
 RUN git clone https://github.com/babakhani/rplidar_ros2.git
 COPY articubot_one articubot_one
-
-RUN apt-get update && apt-get install -y \
-    && rm -rf /var/lib/apt/lists/*
 
 # Add lines to source setup.bash in bashrc
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
