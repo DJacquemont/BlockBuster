@@ -39,9 +39,9 @@ To run the LIDAR's demo, please refer to the [rplidar_ros2](https://github.com/b
 
 #### Robot Simulation (ONLY for AMD64 architecture)
 
-Start a teleoperation node in a terminal:
+Start a teleoperation node in a terminal in the `colcon_ws` repository:
 ```
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleop_node --params-file /colcon_ws/install/articubot_one/share/articubot_one/config/keyboard.yaml -r /cmd_vel:=/cmd_vel_key
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleop_node --params-file install/articubot_one/share/articubot_one/config/keyboard.yaml -r /cmd_vel:=/cmd_vel_key
 ```
 
 Start the simulation launch file in a new terminal:
