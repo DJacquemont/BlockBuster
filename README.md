@@ -39,7 +39,7 @@ To run the LIDAR's demo, please refer to the [rplidar_ros2](https://github.com/b
 
 #### Robot Simulation (ONLY for AMD64 architecture)
 
-Start a teleoperation node in a terminal in the `colcon_ws` repository:
+Start a teleoperation node in a terminal from the `colcon_ws` repository:
 ```
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleop_node --params-file install/articubot_one/share/articubot_one/config/keyboard.yaml -r /cmd_vel:=/cmd_vel_key
 ```
@@ -50,11 +50,18 @@ ros2 launch articubot_one launch_sim.launch.py
 ```
 Gazebo should automatically open. Note that Gazebo takes a long time to launch the first time it is opened. 
 
-Start Rviz in a new terminal:
+Start Rviz in a new terminal from the `colcon_ws` repository with the right configuration:
 ```
-rviz2
+rviz2 -d src/articubot_one/config/main.rviz
 ```
 Open from the GUI the configuration file `main.rviz` to monitor the robot.
+
+To start SLAM with the `slam_toolbox` ros2 package from the `colcon_ws` repository:
+```
+ros2 launch slam_toolbox online_async_launch.py params_file:=src/articubot_one/config/mapper_params_online_async.yaml use_sim_time:=true
+```
+With the `slam_toolbox` can be created a map that will be later used for localization during navigation
+
 
 ### Relevant Commands for ROS2
 
