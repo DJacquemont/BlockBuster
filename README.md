@@ -33,11 +33,11 @@ docker exec -it <container_name> bash
 
 The container name (or container ID) can be found with `docker ps`, this command displays all the containers (active and inactive). In all terminal of the docker container, ros and the built package(s) are already built and sourced thanks to the **.bashrc** file.
 
-#### Demo LIDAR
+#### 1. Demo LIDAR
 
 To run the LIDAR's demo, please refer to the [rplidar_ros2](https://github.com/babakhani/rplidar_ros2) repository.
 
-#### Robot Simulation (ONLY for AMD64 architecture)
+#### 2. Robot Simulation (ONLY for AMD64 architecture)
 
 Start a teleoperation node in a terminal from the `colcon_ws` repository:
 ```
@@ -61,6 +61,34 @@ To start SLAM with the `slam_toolbox` ros2 package from the `colcon_ws` reposito
 ros2 launch slam_toolbox online_async_launch.py params_file:=src/articubot_one/config/mapper_params_online_async.yaml use_sim_time:=true
 ```
 With the `slam_toolbox` can be created a map that will be later used for localization during navigation
+
+#### 3. ROS2 Gazebo World 2D Map Generator
+
+To create a 2D map from a Gazebo 3D world, package `gazebo_map_creator` can be used.
+
+Terminal 1, from the `colcon_ws` repository:
+```
+gazebo -s libgazebo_map_creator.so src/articubot_one/worlds/obstacles.world
+```
+
+Terminal 2, from the `colcon_ws` repository:
+```
+ros2 run gazebo_map_creator request_map.py -c '(-4.8,-4.5,0.03)(4.8,4.5,1.0)' -r 0.01 -f $PWD/map
+```
+
+This second command create a map of the Gazebo world that can be found in the `colcon_ws`.
+
+#### 4. Navigation
+
+To launch AMCL (localization):
+```
+ros2 launch nav2_bringup localization_launch.py map:=./my_map_save.yaml use_sim_time:=true
+```
+
+To launch start the navigation:
+```
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map_subscribe_transient_local:=true
+```
 
 
 ### Relevant Commands for ROS2
