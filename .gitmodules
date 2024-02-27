@@ -1,0 +1,6 @@
+[submodule "gazebo_map_creator"]
+	path = gazebo_map_creator
+	url = git@github.com:arshadlab/gazebo_map_creator.git
+[submodule "rplidar_ros2"]
+	path = rplidar_ros2
+	url = https://github.com/babakhani/rplidar_ros2.git
