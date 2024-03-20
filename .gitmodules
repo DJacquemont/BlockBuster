@@ -4,3 +4,6 @@
 [submodule "rplidar_ros2"]
 	path = rplidar_ros2
 	url = https://github.com/babakhani/rplidar_ros2.git
+[submodule "diffdrive_arduino"]
+	path = diffdrive_arduino
+	url = git@github.com:DJacquemont/diffdrive_arduino.git
