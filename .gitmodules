@@ -1,0 +1,12 @@
+[submodule "gazebo_map_creator"]
+	path = gazebo_map_creator
+	url = git@github.com:arshadlab/gazebo_map_creator.git
+[submodule "rplidar_ros2"]
+	path = rplidar_ros2
+	url = https://github.com/babakhani/rplidar_ros2.git
+[submodule "diffdrive_arduino"]
+	path = diffdrive_arduino
+	url = git@github.com:DJacquemont/diffdrive_arduino.git
+[submodule "articubot_one"]
+	path = articubot_one
+	url = git@github.com:DJacquemont/articubot_one.git
