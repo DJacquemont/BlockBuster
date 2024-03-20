@@ -7,3 +7,6 @@
 [submodule "diffdrive_arduino"]
 	path = diffdrive_arduino
 	url = git@github.com:DJacquemont/diffdrive_arduino.git
+[submodule "articubot_one"]
+	path = articubot_one
+	url = git@github.com:DJacquemont/articubot_one.git
