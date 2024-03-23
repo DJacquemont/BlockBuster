@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     python3-pip \
     cmake \
+    build-essential \
     nano \
     git \
     iproute2 \
@@ -24,6 +25,7 @@ RUN apt-get update && apt-get install -y \
     ros-humble-twist-mux \
     ros-humble-rqt \
     ros-humble-turtlebot3* \
+    ros-humble-ament-cmake \
     && rm -rf /var/lib/apt/lists/*
 
 # Create colcon workspace and clone the projects
@@ -35,7 +37,8 @@ RUN git clone https://github.com/babakhani/rplidar_ros2.git && \
 
 # Build the serial library
 WORKDIR /colcon_ws/src/serial
-RUN make && make install
+RUN make
+RUN make install
 
 # Optimizing the .bashrc entries
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
