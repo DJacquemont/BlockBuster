@@ -37,7 +37,7 @@ RUN git clone https://github.com/babakhani/rplidar_ros2.git && \
 
 # Build the serial library
 WORKDIR /colcon_ws/src/serial
-RUN make
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash; make"
 RUN make install
 
 # Optimizing the .bashrc entries
