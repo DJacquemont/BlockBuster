@@ -12,10 +12,7 @@ RUN apt-get update && apt-get install -y \
     usbutils \
     wget \
     curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install ROS2 packages
-RUN apt-get update && apt-get install -y \
+    libserial-dev \
     ros-humble-ros2-control \
     ros-humble-ros2-controllers \
     ros-humble-xacro \
@@ -29,21 +26,21 @@ RUN apt-get update && apt-get install -y \
     ros-humble-turtlebot3* \
     && rm -rf /var/lib/apt/lists/*
 
-# Create colcon workspace and clone the rplidar_ros2 project
+# Create colcon workspace and clone the projects
 WORKDIR /colcon_ws/src
-RUN git clone https://github.com/babakhani/rplidar_ros2.git
-COPY articubot_one articubot_one
-COPY diffdrive_arduino diffdrive_arduino
-COPY rplidar_ros2 rplidar_ros2
+RUN git clone https://github.com/babakhani/rplidar_ros2.git && \
+    git clone https://github.com/DJacquemont/articubot_one.git && \
+    git clone --branch humble https://github.com/DJacquemont/diffdrive_arduino.git && \
+    git clone https://github.com/joshnewans/serial.git
 
-# Add lines to source setup.bash in bashrc
-RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
-RUN echo "source /colcon_ws/install/setup.bash" >> /root/.bashrc
+# Build the serial library
+WORKDIR /colcon_ws/src/serial
+RUN make && make install
 
-# Add lines to show folder contents on cd
-RUN echo 'cd() {' >> /root/.bashrc
-RUN echo '    builtin cd "$@" && ls' >> /root/.bashrc
-RUN echo '}' >> /root/.bashrc
+# Optimizing the .bashrc entries
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
+    echo "source /colcon_ws/install/setup.bash" >> /root/.bashrc && \
+    echo 'cd() { builtin cd "$@" && ls; }' >> /root/.bashrc
 
 # Build the workspace
 WORKDIR /colcon_ws
