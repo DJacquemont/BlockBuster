@@ -38,7 +38,7 @@ docker pull jacquemont/robot_os
 
 2. Run the Docker container:
 ```
-sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb jacquemont/robot_os bash
+sudo docker run --rm --privileged -it --net=host -v /etc/timezone:/etc/timezone:ro -v /etc/localtime:/etc/localtime:ro -v /dev/bus/usb:/dev/bus/usb jacquemont/robot_os bash
 ```
 Once inside the container, the ROS2 nodes automatically start (`ros2 launch articubot_one launch_robot.launch.py`).
 
