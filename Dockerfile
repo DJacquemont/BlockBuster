@@ -3,7 +3,7 @@ FROM ros:humble-ros-base
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install required packages
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     cmake \
     build-essential \

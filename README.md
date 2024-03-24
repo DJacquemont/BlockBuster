@@ -1,5 +1,10 @@
 # BlockBuster
+
 Code implementation for our robot competing in the EPFL Robotic Competition (MAKE Project 10 ECTS).
+
+<p align="center">
+  <img src="images/coolgif.gif" width="30%">
+</p>
 
 ## Installation
 
@@ -10,7 +15,39 @@ Code implementation for our robot competing in the EPFL Robotic Competition (MAK
 - Gazebo 11
 - Python 3.10
 
-### Installation
+### 1. Nvidia Jetson Nano Connection
+
+1. Connect to the zerotier network (ID: `856127940c82f9a4`):
+```
+sudo zerotier-cli join 856127940c82f9a4
+```
+
+2. SSH into the Jetson Nano:
+```
+ssh jetson@nano.local
+psswd: jetson
+```
+
+
+### 2. Docker Container Setup (Run ROS2 on Jetson Nano)
+
+1. OPTIONAL - Pull the Docker image from Docker Hub (if not already done):
+```
+docker pull jacquemont/robot_os
+```
+
+2. Run the Docker container:
+```
+sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb jacquemont/robot_os bash
+```
+Once inside the container, the ROS2 nodes can be run.
+
+3. OPTIONAL - Open a new terminal in the Docker container:
+```
+sudo docker exec -it $(sudo docker ps -aqf "ancestor=jacquemont/robot_os") bash
+```
+
+### 3. Local Machine Setup (Run ROS2 locally)
 
 1. Create a new workspace:
 ```
@@ -38,6 +75,7 @@ colcon build --symlink-install
 ```
 source ~/colcon_ws/install/setup.bash
 ```
+Once the workspace is built, the ROS2 nodes can be run.
 
 ## Getting Started
 
@@ -62,7 +100,7 @@ Gazebo should automatically open. Note that Gazebo takes a long time to launch t
 
 Start a teleoperation node in a terminal from the `colcon_ws` repository:
 ```
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleop_node --params-file install/articubot_one/share/articubot_one/config/keyboard.yaml -r /cmd_vel:=/cmd_vel_key
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleop_node -r /cmd_vel:=/cmd_vel_key
 ```
 
 #### 3.2. Rviz
