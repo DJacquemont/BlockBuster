@@ -40,7 +40,7 @@ docker pull jacquemont/robot_os
 ```
 sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb jacquemont/robot_os bash
 ```
-Once inside the container, the ROS2 nodes can be run.
+Once inside the container, the ROS2 nodes automatically start (`ros2 launch articubot_one launch_robot.launch.py`).
 
 3. OPTIONAL - Open a new terminal in the Docker container:
 ```
@@ -56,7 +56,7 @@ mkdir -p ~/colcon_ws/src && cd ~/colcon_ws/src
 
 2. Clone the repository:
 ```
-git clone git@github.com:DJacquemont/blockbuster.git
+git clone git@github.com:DJacquemont/blockbuster.git .
 ```
 
 3. Fetch the submodules:
