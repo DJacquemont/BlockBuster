@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - testing-CI
+      - nav_test
       # - main
 
 jobs:
