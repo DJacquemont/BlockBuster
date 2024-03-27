@@ -1,11 +1,8 @@
 #!/bin/bash
 
-echo -e "\n#######################################################\n"
-echo    "                  ROBOT IS STARTING..."
-echo -e "\n#######################################################\n"
-
-cd /root/colcon_ws
+cd /
 source /root/colcon_ws/install/setup.bash
-ros2 launch articubot_one launch_robot.launch.py
+
+chmod +x start_mission.sh
 
 exec "$@"

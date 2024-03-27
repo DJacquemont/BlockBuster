@@ -53,6 +53,9 @@ RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
 WORKDIR /root/colcon_ws
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash; colcon build --symlink-install"
 
+COPY start_mission.sh /
+RUN chmod +x /start_mission.sh
+
 # Set up the entrypoint
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
