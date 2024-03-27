@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /root/colcon_ws/install/setup.bash
+
 echo -e "\n#######################################################\n"
 echo "                       ROBOT MENU"
 echo -e "\n#######################################################\n"
