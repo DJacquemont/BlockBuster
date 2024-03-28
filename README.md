@@ -28,6 +28,10 @@ ssh jetson@nano.local
 psswd: jetson
 ```
 
+3. Shutdown Jetson Nano:
+```
+sudo poweroff
+```
 
 ### 2. Docker Container Setup (Run ROS2 on Jetson Nano)
 
@@ -45,6 +49,11 @@ Once inside the container, the ROS2 nodes automatically start (`ros2 launch arti
 3. OPTIONAL - Open a new terminal in the Docker container:
 ```
 sudo docker exec -it $(sudo docker ps -aqf "ancestor=jacquemont/robot_os") bash
+```
+
+4. Exit Docker container:
+```
+ctrl -D
 ```
 
 ### 3. Local Machine Setup (Run ROS2 locally)
