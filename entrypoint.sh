@@ -1,7 +1,7 @@
 #!/bin/bash
 
-cd /
+cd /root
 
-chmod +x start_mission.sh
+chmod +x robot_start.sh
 
 exec "$@"
