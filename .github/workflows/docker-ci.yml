@@ -5,11 +5,11 @@ on:
     branches:
       - main
 
-  push:
-    branches:
-      - testing-CI
-      - nav_test
-      - main
+  # push:
+  #   branches:
+      # - testing-CI
+      # - nav_test
+      # - main
 
 jobs:
   build:
