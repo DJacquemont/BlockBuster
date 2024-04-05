@@ -28,30 +28,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ament-cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Update & upgrade packages
-RUN apt-get update && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create colcon workspace and clone the projects
+# Create colcon workspace
 WORKDIR /root/colcon_ws/src
-RUN git clone https://github.com/babakhani/rplidar_ros2.git && \
-    git clone https://github.com/DJacquemont/articubot_one.git && \
-    git clone --branch humble https://github.com/DJacquemont/diffdrive_arduino.git && \
-    git clone https://github.com/joshnewans/serial.git
 
 # Build the serial library
-WORKDIR /root/colcon_ws/src/serial
-RUN /bin/bash -c "source /opt/ros/humble/setup.bash; make"
-RUN make install
+WORKDIR /root
+RUN git clone https://github.com/joshnewans/serial.git
+WORKDIR /root/serial
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash; make" && \
+    make install
 
 # Optimizing the .bashrc entries
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
-    echo "source /colcon_ws/install/setup.bash" >> /root/.bashrc && \
     echo 'cd() { builtin cd "$@" && ls; }' >> /root/.bashrc
 
 # Build the workspace
-WORKDIR /root/colcon_ws
-RUN /bin/bash -c "source /opt/ros/humble/setup.bash; colcon build --symlink-install"
+# WORKDIR /root/colcon_ws
+# RUN /bin/bash -c "source /opt/ros/humble/setup.bash; colcon build --symlink-install"
+
+COPY robot_start.sh /root
+RUN chmod +x /root/robot_start.sh
 
 # Set up the entrypoint
 COPY entrypoint.sh /

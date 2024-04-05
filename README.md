@@ -42,11 +42,15 @@ docker pull jacquemont/robot_os
 
 2. Run the Docker container:
 ```
-sudo docker run --rm --privileged -it --net=host -v /etc/timezone:/etc/timezone:ro -v /etc/localtime:/etc/localtime:ro -v /dev/bus/usb:/dev/bus/usb jacquemont/robot_os bash
+sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb -v /home/jetson/colcon_ws/src:/root/colcon_ws/src jacquemont/robot_os bash
 ```
-Once inside the container, the ROS2 nodes automatically start (`ros2 launch articubot_one launch_robot.launch.py`).
 
-3. OPTIONAL - Open a new terminal in the Docker container:
+3. Open the robot software startup menu in the docker container:
+```
+bash robot_start.sh
+```
+
+4. OPTIONAL - Open a new terminal in the Docker container:
 ```
 sudo docker exec -it $(sudo docker ps -aqf "ancestor=jacquemont/robot_os") bash
 ```
@@ -128,23 +132,7 @@ ros2 launch slam_toolbox online_async_launch.py params_file:=src/articubot_one/c
 ```
 With the `slam_toolbox` can be created a map that will be later used for localization during navigation
 
-#### 3.4. Map Creation
-
-To create a 2D map from a Gazebo 3D world, package `gazebo_map_creator` can be used.
-
-Terminal 1, from the `colcon_ws` repository:
-```
-gazebo -s libgazebo_map_creator.so src/articubot_one/worlds/obstacles.world
-```
-
-Terminal 2, from the `colcon_ws` repository:
-```
-ros2 run gazebo_map_creator request_map.py -c '(-4.8,-4.5,0.03)(4.8,4.5,1.0)' -r 0.01 -f $PWD/map
-```
-
-This second command create a map of the Gazebo world that can be found in the `colcon_ws`.
-
-#### 3.5. Navigation
+#### 3.4. Navigation
 
 To launch AMCL (localization):
 ```
