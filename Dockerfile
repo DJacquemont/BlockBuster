@@ -28,10 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ament-cmake \
     && rm -rf /var/lib/apt/lists/*
 
-# Update & upgrade packages
-RUN apt-get update && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
-
 # Create colcon workspace
 WORKDIR /root/colcon_ws/src
 
