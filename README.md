@@ -94,18 +94,17 @@ Once the workspace is built, the ROS2 nodes can be run.
 
 ### 1. Robot HARDWARE
 
-To start the robot hardware (once the robot's hardware is connected to the laptop), run the following command from the `colcon_ws` repository:
+To start the robot hardware (once the robot's hardware is connected to the laptop), run the following command:
 ```
-ros2 launch articubot_one launch_robot.launch.py
+./robot_start.sh
 ```
 
 ### 2. Robot SIMULATION (ONLY for AMD64 architecture)
 
-Start the simulation launch file in a new terminal:
+To start the robot simulation, run the following command:
 ```
-ros2 launch articubot_one launch_sim.launch.py
+./sim_start.sh
 ```
-Gazebo should automatically open. Note that Gazebo takes a long time to launch the first time it is opened. 
 
 ### 3. Other Nodes
 
@@ -116,6 +115,11 @@ Start a teleoperation node in a terminal from the `colcon_ws` repository:
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleop_node -r /cmd_vel:=/cmd_vel_key
 ```
 
+Or with the joystick:
+```
+ros2 launch articubot_one joystick.launch.py
+```
+
 #### 3.2. Rviz
 
 Start Rviz in a new terminal from the `colcon_ws` repository with the right configuration:
@@ -123,23 +127,3 @@ Start Rviz in a new terminal from the `colcon_ws` repository with the right conf
 rviz2
 ```
 Open from the GUI the configuration file `main.rviz` to monitor the robot.
-
-#### 3.3. SLAM
-
-To start SLAM with the `slam_toolbox` ros2 package from the `colcon_ws` repository:
-```
-ros2 launch slam_toolbox online_async_launch.py params_file:=src/articubot_one/config/mapper_params_online_async.yaml use_sim_time:=true
-```
-With the `slam_toolbox` can be created a map that will be later used for localization during navigation
-
-#### 3.4. Navigation
-
-To launch AMCL (localization):
-```
-ros2 launch nav2_bringup localization_launch.py map:=./my_map_save.yaml use_sim_time:=true
-```
-
-To start the navigation:
-```
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map_subscribe_transient_local:=true
-```
