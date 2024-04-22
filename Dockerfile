@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-rqt \
     ros-humble-turtlebot3* \
     ros-humble-ament-cmake \
+    ros-humble-depthai-ros \
     && rm -rf /var/lib/apt/lists/*
 
 # Create colcon workspace
