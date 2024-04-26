@@ -86,7 +86,7 @@ endmacro()
 dai_add_node_ros2(image_overlay_node src/image_overlay_node.cpp)
 
 dai_add_node_ros2(yolov6_spatial_node src/yolov6_spatial_publisher.cpp)
-target_compile_definitions(yolov6_spatial_node PRIVATE BLOB_NAME="${tiny_yolo_v4_blob_name}")
+target_compile_definitions(yolov6_spatial_node PRIVATE BLOB_NAME="yolov6ntrainedDuplo_openvino_2022.1_6shave.blob")
 
 install(DIRECTORY resources DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch

@@ -23,16 +23,7 @@
 #include "depthai/pipeline/node/StereoDepth.hpp"
 #include "depthai/pipeline/node/XLinkOut.hpp"
 
-const std::vector<std::string> label_map = {
-    "person",        "bicycle",      "car",           "motorbike",     "aeroplane",   "bus",         "train",       "truck",        "boat",
-    "traffic light", "fire hydrant", "stop sign",     "parking meter", "bench",       "bird",        "cat",         "dog",          "horse",
-    "sheep",         "cow",          "elephant",      "bear",          "zebra",       "giraffe",     "backpack",    "umbrella",     "handbag",
-    "tie",           "suitcase",     "frisbee",       "skis",          "snowboard",   "sports ball", "kite",        "baseball bat", "baseball glove",
-    "skateboard",    "surfboard",    "tennis racket", "bottle",        "wine glass",  "cup",         "fork",        "knife",        "spoon",
-    "bowl",          "banana",       "apple",         "sandwich",      "orange",      "broccoli",    "carrot",      "hot dog",      "pizza",
-    "donut",         "cake",         "chair",         "sofa",          "pottedplant", "bed",         "diningtable", "toilet",       "tvmonitor",
-    "laptop",        "mouse",        "remote",        "keyboard",      "cell phone",  "microwave",   "oven",        "toaster",      "sink",
-    "refrigerator",  "book",         "clock",         "vase",          "scissors",    "teddy bear",  "hair drier",  "toothbrush"};
+const std::vector<std::string> label_map = {"duplo"};
 
 dai::Pipeline createPipeline(bool syncNN, bool subpixel, std::string nnPath, int confidence, int LRchecktresh, std::string resolution) {
     dai::Pipeline pipeline;
@@ -81,6 +72,7 @@ dai::Pipeline createPipeline(bool syncNN, bool subpixel, std::string nnPath, int
     stereo->initialConfig.setLeftRightCheckThreshold(LRchecktresh);
     stereo->setSubpixel(subpixel);
     stereo->setDepthAlign(dai::CameraBoardSocket::CAM_A);
+    stereo->initialConfig.setMedianFilter(dai::MedianFilter::KERNEL_3x3);
 
     spatialDetectionNetwork->setBlobPath(nnPath);
     spatialDetectionNetwork->setConfidenceThreshold(0.5f);
@@ -90,7 +82,7 @@ dai::Pipeline createPipeline(bool syncNN, bool subpixel, std::string nnPath, int
     spatialDetectionNetwork->setDepthUpperThreshold(5000);
 
     // yolo specific parameters
-    spatialDetectionNetwork->setNumClasses(80);
+    spatialDetectionNetwork->setNumClasses(1);
     spatialDetectionNetwork->setCoordinateSize(4);
     spatialDetectionNetwork->setAnchors({10, 14, 23, 27, 37, 58, 81, 82, 135, 169, 344, 319});
     spatialDetectionNetwork->setAnchorMasks({{"side13", {3, 4, 5}}, {"side26", {1, 2, 3}}});
