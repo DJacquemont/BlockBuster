@@ -1,14 +1,18 @@
 from bb_state_machine.tools import BaseState
 
 class AutoNavT(BaseState):
+    def __init__(self, name, shared_data, action_interface, logger):
+        super().__init__(name, shared_data, logger)
+
     def enter(self):
-        print("Entering state: AUTO_NAV_T")
+        self.logger.info("Entering state: AUTO_NAV_T")
+        self.status = "RUNNING"
         # Initialize navigation parameters
 
     def execute(self):
-        print("Executing AUTO_NAV_T: Navigating while avoiding obstacles with sidequests.")
+        self.status = "COMPLETED"
         # Implementation for auto navigation avoiding obstacles
 
     def exit(self):
-        print("Exiting state: AUTO_NAV_T")
         # Clean up or reset navigation parameters
+        pass

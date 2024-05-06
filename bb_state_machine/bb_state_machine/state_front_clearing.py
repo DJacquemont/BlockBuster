@@ -1,14 +1,18 @@
 from bb_state_machine.tools import BaseState
 
 class FrontClearing(BaseState):
+    def __init__(self, name, shared_data, action_interface, logger):
+        super().__init__(name, shared_data, logger)
+
     def enter(self):
-        print("Entering state: FRONT_CLEARING")
-        # Setup for clearing operations
+        self.logger.info("Entering state: FRONT_CLEARING")
+        self.status = "RUNNING"
+        # Initialize navigation parameters
 
     def execute(self):
-        print("Executing FRONT_CLEARING: Clearing distance in front.")
-        # Clearing logic
+        self.status = "COMPLETED"
+        # Implementation for auto navigation avoiding obstacles
 
     def exit(self):
-        print("Exiting state: FRONT_CLEARING")
-        # Clean up or reset after clearing
+        # Clean up or reset navigation parameters
+        pass

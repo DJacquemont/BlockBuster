@@ -11,7 +11,7 @@ echo "4) Build project"
 echo -e "Enter your choice (1/2/3/4): \c"
 read choice
 
-echo "\nSearching for colcon_ws directory..."
+echo -e "\nSearching for colcon_ws directory..."
 colcon_dir=$(find /home -type d -name "colcon_ws" 2>/dev/null | head -n 1)
 if [[ -z "$colcon_dir" ]]; then
     echo "colcon_ws directory not found."
@@ -31,19 +31,16 @@ fi
 case $choice in
     1)
         echo -e "\nStarting the robot naked..."
-        source /home/djacquem/colcon_ws/install/setup.bash
         echo -e "Configuration: SLAM disabled, Navigation disabled, Localisation disabled\n"
         ros2 launch articubot_one launch_sim.launch.py activate_slam:=false activate_nav:=false activate_loc:=false
         ;;
     2)
         echo -e "\nStarting the robot with SLAM..."
-        source /home/djacquem/colcon_ws/install/setup.bash
         echo -e "Configuration: SLAM enabled, Navigation disabled, Localisation disabled\n"
         ros2 launch articubot_one launch_sim.launch.py activate_slam:=true activate_nav:=false activate_loc:=false
         ;;
     3)
         echo -e "\nStarting the robot with navigation & localisation..."
-        source /home/djacquem/colcon_ws/install/setup.bash
         echo -e "Configuration: SLAM disabled, Navigation enabled, Localisation enabled\n"
         ros2 launch articubot_one launch_sim.launch.py activate_slam:=false activate_nav:=true activate_loc:=true
         ;;

@@ -31,19 +31,16 @@ fi
 case $choice in
     1)
         echo -e "\nStarting the robot naked..."
-        source /root/colcon_ws/install/setup.bash
         echo -e "Configuration: SLAM disabled, Navigation disabled, Localisation disabled\n"
         ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=false activate_loc:=false
         ;;
     2)
         echo -e "\nStarting the robot with SLAM..."
-        source /root/colcon_ws/install/setup.bash
         echo -e "Configuration: SLAM enabled, Navigation disabled, Localisation disabled\n"
         ros2 launch articubot_one launch_robot.launch.py activate_slam:=true activate_nav:=false activate_loc:=false
         ;;
     3)
         echo -e "\nStarting the robot with navigation & localisation..."
-        source /root/colcon_ws/install/setup.bash
         echo -e "Configuration: SLAM disabled, Navigation enabled, Localisation enabled\n"
         ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true
         ;;
