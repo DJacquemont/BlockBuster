@@ -24,11 +24,14 @@ class ManNav(BaseState):
             self.current_command = self.commands[self.command_index]
             self.goal_reached = False
             self.start_pose = [self.shared_data.x, self.shared_data.y, self.shared_data.theta]
+            self.logger.info(f'Starting pose: {self.start_pose}')
 
     def execute(self):
         if not self.goal_reached and self.status == "RUNNING":
             command_type, value1, value2 = self.current_command
+            self.logger.info(f"Executing command: {command_type} {value1} {value2}")
             if command_type == 'r':
+                self.logger.info(f"Rotating {value1} degrees at {value2} rad/s")
                 self.execute_rotation(float(value1), float(value2))
             elif command_type == 't':
                 self.execute_translation(float(value1), float(value2))
@@ -63,7 +66,6 @@ class ManNav(BaseState):
                         # or log it as insufficient data depending on your application's requirements
                         command = (line[0], line[1], None)  # Example: use None for unspecified values
                         self.commands.append(command)
-                        self.logger.warning(f"Line with insufficient data treated as a special case: {line}")
                     elif len(line) == 3:
                         command = (line[0], line[1], line[2])
                         self.commands.append(command)
@@ -73,26 +75,30 @@ class ManNav(BaseState):
         except IOError:
             self.logger.error("Failed to read the command file, looking in: " + self.command_file)
 
-    def execute_rotation(self, angle, angular_speed):
-        target_theta_speed = 0
+    def angle_difference(self, target, current):
+        diff = (target - current) % (2 * np.pi)
+        return diff if diff <= np.pi else diff - (2 * np.pi)
 
-        if angle > 0:
-            if self.shared_data.theta % (2 * np.pi) > self.start_pose[2] + angle % (2 * np.pi):
-                target_theta_speed = 0
-                self.goal_reached = True
-            else:
-                target_theta_speed = angular_speed
+
+    def execute_rotation(self, angle, angular_speed):
+        self.logger.info(f"Current theta true: {self.shared_data.theta}")
+        current_theta = self.shared_data.theta % (2 * np.pi)
+        target_theta = (self.start_pose[2] + angle) % (2 * np.pi)
+
+        angle_diff = self.angle_difference(target_theta, current_theta)
+
+        self.logger.info(f"Current theta: {current_theta}")
+        self.logger.info(f"Target theta: {target_theta}")
+        self.logger.info(f"Angle difference: {angle_diff}")
+
+        if abs(angle_diff) < 0.07:
+            target_theta_speed = 0
+            self.goal_reached = True
         else:
-            if self.shared_data.theta % (2 * np.pi) < self.start_pose[2] + angle % (2 * np.pi):
-                target_theta_speed = 0
-                self.goal_reached = True
-            else:
-                target_theta_speed = -angular_speed
-                
+            target_theta_speed = np.sign(angle_diff) * angular_speed
         
         self.action_interface('publish_cmd_vel', angular_z=target_theta_speed)
 
-        
 
     def execute_translation(self, distance, speed):
         target_x_speed = 0
@@ -115,8 +121,8 @@ class ManNav(BaseState):
 
     def command_storage(self, command):
         if command == "c":
-            self.action_interface('publish_servo_cmd', 1.0)
+            self.action_interface('publish_servo_cmd', servo_command=[0.0])
             self.goal_reached = True
         elif command == "o":
-            self.action_interface('publish_servo_cmd', 0.0)
+            self.action_interface('publish_servo_cmd', servo_command=[1.0])
             self.goal_reached = True

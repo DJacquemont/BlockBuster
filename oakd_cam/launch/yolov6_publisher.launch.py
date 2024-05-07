@@ -204,7 +204,7 @@ def generate_launch_description():
     ld.add_action(declare_resourceBaseFolder_cmd)
     ld.add_action(declare_confidence_cmd)
     ld.add_action(declare_sync_nn_cmd)
-    ld.add_action(urdf_launch)
+    # ld.add_action(urdf_launch)
 
     ld.add_action(declare_subpixel_cmd)
     ld.add_action(declare_lrCheckTresh_cmd)
