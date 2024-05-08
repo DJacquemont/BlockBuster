@@ -34,7 +34,8 @@ class StateMachineNode(Node):
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.set_mission("MISSION_1")
 
-        self.timer = self.create_timer(0.1, self.timer_callback)  # Adjust timer rate as needed
+        self.timer_tf = self.create_timer(0.05, self.timer_tf_callback)
+        self.timer_sm_delay = self.create_timer(4.0, self.start_timer_sm)
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel_mn', 10)
         self.servo_pub = self.create_publisher(Float64MultiArray, '/storage_servo/commands', 10)
 
@@ -47,7 +48,7 @@ class StateMachineNode(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-    def timer_callback(self):
+    def timer_tf_callback(self):
         try:
             trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time())
             
@@ -60,9 +61,15 @@ class StateMachineNode(Node):
             self.shared_data.update_position(trans.transform.translation.x, trans.transform.translation.y, yaw)
             
         except TransformException as ex:
-            # self.get_logger().info(f'Could not transform base_link to map: {ex}')
+            self.get_logger().info(f'Could not transform base_link to map: {ex}')
             pass
         
+    def start_timer_sm(self):
+        self.timer_sm = self.create_timer(0.05, self.timer_sm_callback)
+        self.timer_sm_delay.cancel()
+        self.timer_sm_delay = None 
+
+    def timer_sm_callback(self):        
         self.state_machine.execute()
 
     def yolov6_callback(self, msg):
