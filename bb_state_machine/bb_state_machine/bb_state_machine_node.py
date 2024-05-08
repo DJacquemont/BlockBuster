@@ -49,8 +49,7 @@ class StateMachineNode(Node):
 
     def timer_callback(self):
         try:
-            trans = self.tf_buffer.lookup_transform("base_link", "map", rclpy.time.Time())
-            trans = self.tf_buffer.lookup_transform("base_link", "map", rclpy.time.Time())
+            trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time())
             
             x = trans.transform.rotation.x
             y = trans.transform.rotation.y

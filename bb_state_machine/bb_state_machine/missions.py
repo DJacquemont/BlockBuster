@@ -10,7 +10,7 @@ class Mission1(SuperState):
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger))
         self.add_substate("AUTO_NAV_A_1", AutoNavA("AUTO_NAV_A_1", self.shared_data, action_interface, logger))
         self.add_substate("AUTO_NAV_A_2", AutoNavA("AUTO_NAV_A_2", self.shared_data, action_interface, logger))
-        self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, "/test.csv"))
+        self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/test.csv"))
         self.default_substate = "AUTO_NAV_T"
 
     def determine_next_state(self):
@@ -42,7 +42,7 @@ class Mission2(SuperState):
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger))
         self.add_substate("AUTO_NAV_A_1", AutoNavA("AUTO_NAV_A_1", self.shared_data, action_interface, logger))
         self.add_substate("AUTO_NAV_A_2", AutoNavA("AUTO_NAV_A_2", self.shared_data, action_interface, logger))
-        self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, "/test.csv"))
+        self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/test.csv"))
         self.default_substate = "AUTO_NAV_T"
 
     def determine_next_state(self):
@@ -74,7 +74,7 @@ class Mission3(SuperState):
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger))
         self.add_substate("AUTO_NAV_A_1", AutoNavA("AUTO_NAV_A_1", self.shared_data, action_interface, logger))
         self.add_substate("AUTO_NAV_A_2", AutoNavA("AUTO_NAV_A_2", self.shared_data, action_interface, logger))
-        self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, "/test.csv"))
+        self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/test.csv"))
         self.default_substate = "AUTO_NAV_T"
 
     def determine_next_state(self):
