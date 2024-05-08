@@ -84,15 +84,19 @@ endmacro()
 
 # Adding your new node
 dai_add_node_ros2(image_overlay_node src/image_overlay_node.cpp)
+dai_add_node_ros2(oakd_imu_node src/new_oakd_imu.cpp)
 
 dai_add_node_ros2(yolov6_spatial_node src/yolov6_spatial_publisher.cpp)
 target_compile_definitions(yolov6_spatial_node PRIVATE BLOB_NAME="yolov6ntrainedDuplo_openvino_2022.1_6shave.blob")
+target_compile_definitions(oakd_imu_node PRIVATE BLOB_NAME="yolov6ntrainedDuplo_openvino_2022.1_6shave.blob")
 
 install(DIRECTORY resources DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch
 FILES_MATCHING PATTERN "*.py")
 
 install(TARGETS
+        oakd_imu_node
         yolov6_spatial_node
         image_overlay_node  # Ensure your new node is also installed
         DESTINATION lib/${PROJECT_NAME})
