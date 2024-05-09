@@ -32,17 +32,17 @@ case $choice in
     1)
         echo -e "\nStarting the robot naked..."
         echo -e "Configuration: SLAM disabled, Navigation disabled, Localisation disabled\n"
-        ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=false activate_loc:=false
+        ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=false activate_loc:=false  activate_cam:=false
         ;;
     2)
         echo -e "\nStarting the robot with SLAM..."
         echo -e "Configuration: SLAM enabled, Navigation disabled, Localisation disabled\n"
-        ros2 launch articubot_one launch_robot.launch.py activate_slam:=true activate_nav:=false activate_loc:=false
+        ros2 launch articubot_one launch_robot.launch.py activate_slam:=true activate_nav:=false activate_loc:=false  activate_cam:=false
         ;;
     3)
         echo -e "\nStarting the robot with navigation & localisation..."
         echo -e "Configuration: SLAM disabled, Navigation enabled, Localisation enabled\n"
-        ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true
+        ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true
         ;;
     4)
         echo -e "\nBuilding project..."

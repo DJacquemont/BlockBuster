@@ -17,6 +17,8 @@ from visualization_msgs.msg import Marker
 import numpy as np
 from nav2_simple_commander.robot_navigator import BasicNavigator
 import math
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 
 class StateMachineNode(Node):
@@ -41,7 +43,8 @@ class StateMachineNode(Node):
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel_mn', 10)
         self.servo_pub = self.create_publisher(Float64MultiArray, '/storage_servo/commands', 10)
 
-        self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1)
+        self.callback_group = MutuallyExclusiveCallbackGroup()
+        self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1, callback_group=self.callback_group)
         self.marker_pub = self.create_publisher(Marker, 'visualization_marker', 10)
 
         self.detected_objects = {}  
@@ -86,7 +89,7 @@ class StateMachineNode(Node):
 
             try:
                 # Transform the point to the base_link frame
-                point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "base_link", rclpy.duration.Duration(seconds=1))
+                point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=1))
 
                 # Create a tuple for the object's position
                 object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y, point_in_base_frame.point.z)
@@ -108,7 +111,7 @@ class StateMachineNode(Node):
                 self.get_logger().info('POSITION Z in base_link frame: ' + str(point_in_base_frame.point.z))
 
                 marker = Marker()
-                marker.header.frame_id = "base_link"
+                marker.header.frame_id = "map"
                 marker.header.stamp = self.get_clock().now().to_msg()
                 marker.id = i
                 marker.type = Marker.SPHERE
@@ -157,13 +160,31 @@ class StateMachineNode(Node):
         elif action_type == 'log_info':
             self.get_logger().info(kwargs.get('message', ''))
 
+# def main(args=None):
+#     rclpy.init(args=args)
+#     state_machine_node = StateMachineNode()
+#     rclpy.spin(state_machine_node)
+
+#     state_machine_node.destroy_node()
+#     rclpy.shutdown()
+
 def main(args=None):
     rclpy.init(args=args)
     state_machine_node = StateMachineNode()
-    rclpy.spin(state_machine_node)
 
-    state_machine_node.destroy_node()
-    rclpy.shutdown()
+    # Create a MultiThreadedExecutor
+    executor = MultiThreadedExecutor()
+
+    # Add your node to the executor
+    executor.add_node(state_machine_node)
+
+    try:
+        # Use the executor to spin the node instead of calling rclpy.spin directly
+        executor.spin()
+    finally:
+        # Shutdown and cleanup should be handled in the finally block
+        state_machine_node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
