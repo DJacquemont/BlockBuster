@@ -32,6 +32,10 @@ psswd: jetson
 ```
 sudo poweroff
 ```
+4. Disconnect from the zerotier network (ID: `856127940c82f9a4`):
+```
+sudo zerotier-cli leave 856127940c82f9a4
+```
 
 ### 2. Docker Container Setup (Run ROS2 on Jetson Nano)
 
