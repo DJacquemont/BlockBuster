@@ -11,7 +11,6 @@
 
   <depend>rclcpp</depend>
   <depend>cv_bridge</depend>
-  <depend>camera_info_manager</depend>
   <depend>depthai</depend>
   <depend>depthai_ros_msgs</depend>
   <depend>depthai_bridge</depend>

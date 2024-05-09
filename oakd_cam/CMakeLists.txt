@@ -42,7 +42,6 @@ endmacro()
 
 find_package(ament_cmake REQUIRED)
 
-find_package(camera_info_manager REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(depthai CONFIG REQUIRED)
 find_package(depthai_ros_msgs REQUIRED)
@@ -54,7 +53,6 @@ find_package(std_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
 
 set(dependencies
-  camera_info_manager
   cv_bridge
   depthai_ros_msgs
   depthai_bridge

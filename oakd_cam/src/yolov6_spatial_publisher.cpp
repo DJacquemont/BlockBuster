@@ -4,7 +4,6 @@
 #include <iostream>
 #include <tuple>
 
-#include "camera_info_manager/camera_info_manager.hpp"
 #include "depthai_bridge/BridgePublisher.hpp"
 #include "depthai_bridge/ImageConverter.hpp"
 #include "depthai_bridge/ImgDetectionConverter.hpp"
