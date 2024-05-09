@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-turtlebot3* \
     ros-humble-ament-cmake \
     ros-humble-depthai-ros \
+    ros-humble-imu-filter-madgwick \
     && rm -rf /var/lib/apt/lists/*
 
 # Create colcon workspace
@@ -42,10 +43,6 @@ RUN /bin/bash -c "source /opt/ros/humble/setup.bash; make" && \
 # Optimizing the .bashrc entries
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
     echo 'cd() { builtin cd "$@" && ls; }' >> /root/.bashrc
-
-# Build the workspace
-# WORKDIR /root/colcon_ws
-# RUN /bin/bash -c "source /opt/ros/humble/setup.bash; colcon build --symlink-install"
 
 COPY robot_start.sh /root
 RUN chmod +x /root/robot_start.sh

@@ -9,7 +9,6 @@ from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from std_msgs.msg import Float64MultiArray
-from tf_transformations import euler_from_quaternion
 from depthai_ros_msgs.msg import SpatialDetectionArray
 from geometry_msgs.msg import PointStamped, Pose, PoseStamped
 import tf2_geometry_msgs
@@ -63,8 +62,11 @@ class StateMachineNode(Node):
             y = trans.transform.rotation.y
             z = trans.transform.rotation.z
             w = trans.transform.rotation.w
+
+            roll, pitch, yaw = quaternion_to_euler(x, y, z, w)
             
-            _, _, yaw = euler_from_quaternion([x, y, z, w])
+            self.shared_data.update_position(trans.transform.translation.x, trans.transform.translation.y, yaw)
+            
             self.shared_data.update_position(trans.transform.translation.x, trans.transform.translation.y, yaw)
             
         except TransformException as ex:
@@ -159,6 +161,22 @@ class StateMachineNode(Node):
             return self.navigator.isTaskComplete()
         elif action_type == 'log_info':
             self.get_logger().info(kwargs.get('message', ''))
+
+def quaternion_to_euler(x, y, z, w):
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll_x = math.atan2(t0, t1)
+    
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch_y = math.asin(t2)
+    
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw_z = math.atan2(t3, t4)
+    
+    return roll_x, pitch_y, yaw_z # in radians
 
 # def main(args=None):
 #     rclpy.init(args=args)

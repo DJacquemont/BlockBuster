@@ -67,14 +67,9 @@ ctrl -D
 mkdir -p ~/colcon_ws/src && cd ~/colcon_ws/src
 ```
 
-2. Clone the repository:
+2. Clone the repository with the submodules:
 ```
-git clone git@github.com:DJacquemont/blockbuster.git .
-```
-
-3. Fetch the submodules:
-```
-git submodule update --init --recursive
+git clone --recursive git@github.com:DJacquemont/blockbuster.git .
 ```
 
 4. Build the workspace:
