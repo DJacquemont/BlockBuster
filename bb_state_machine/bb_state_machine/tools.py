@@ -3,7 +3,7 @@ import csv
 
 class SharedData:
     def __init__(self):
-        self.data_path = None
+        self._data_path = None
         
         self._x = 0
         self._y = 0
@@ -21,11 +21,18 @@ class SharedData:
     @property
     def theta(self):
         return self._theta
+    
+    @property
+    def data_path(self):
+        return self._data_path
 
     def update_position(self, x, y, theta):
         self._x = x
         self._y = y
         self._theta = theta
+
+    def update_data_path(self, data_path):
+        self._data_path = data_path
 
 class RobotStateMachine:
     def __init__(self, logger):

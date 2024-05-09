@@ -11,10 +11,12 @@ from tf2_ros.transform_listener import TransformListener
 from std_msgs.msg import Float64MultiArray
 from tf_transformations import euler_from_quaternion
 from depthai_ros_msgs.msg import SpatialDetectionArray
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import PointStamped, Pose, PoseStamped
 import tf2_geometry_msgs
 from visualization_msgs.msg import Marker
 import numpy as np
+from nav2_simple_commander.robot_navigator import BasicNavigator
+import math
 
 
 class StateMachineNode(Node):
@@ -24,7 +26,7 @@ class StateMachineNode(Node):
         self.declare_parameter('data_path', '/src/bb_state_machine/config')
 
         self.shared_data = SharedData()
-        self.shared_data.data_path = self.get_parameter('data_path').get_parameter_value().string_value
+        self.shared_data.update_data_path(self.get_parameter('data_path').get_parameter_value().string_value)
 
         self.get_logger().info(f'Blockbuster State Machine node started with data path: {self.shared_data.data_path}')
 
@@ -47,6 +49,8 @@ class StateMachineNode(Node):
         self.next_object_id = 0
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.navigator = BasicNavigator()
+        self.navigator.waitUntilNav2Active()
 
     def timer_tf_callback(self):
         try:
@@ -139,6 +143,17 @@ class StateMachineNode(Node):
             msg = Float64MultiArray()
             msg.data = servo_command
             self.servo_pub.publish(msg)
+        elif action_type == 'navigate_to_pose':
+            goal_pose = PoseStamped()
+            goal_pose.header.frame_id = 'map'
+            goal_pose.header.stamp = self.navigator.get_clock().now().to_msg()
+            goal_pose.pose.position.x = float(kwargs.get('goal_x', 0))
+            goal_pose.pose.position.y = float(kwargs.get('goal_y', 0))
+            goal_pose.pose.orientation.z = math.sin(float(kwargs.get('goal_theta', 0)) / 2.0)
+            goal_pose.pose.orientation.w = math.cos(float(kwargs.get('goal_theta', 0)) / 2.0)
+            self.navigator.goToPose(goal_pose)
+        elif action_type == 'is_nav_complete':
+            return self.navigator.isTaskComplete()
         elif action_type == 'log_info':
             self.get_logger().info(kwargs.get('message', ''))
 
