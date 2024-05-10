@@ -18,7 +18,6 @@ def generate_launch_description():
     urdf_launch_dir = os.path.join(get_package_share_directory('depthai_descriptions'), 'launch')
     default_resources_path = os.path.join(oakd_cam_path,
                                 'resources')
-    print('Default resources path..............')
     camera_model = LaunchConfiguration('camera_model',  default = 'OAK-D')
     tf_prefix    = LaunchConfiguration('tf_prefix',     default = 'oak')
     base_frame   = LaunchConfiguration('base_frame',    default = 'oak-d_frame')
@@ -41,6 +40,14 @@ def generate_launch_description():
     confidence         = LaunchConfiguration('confidence',        default = 200)
     lrCheckTresh       = LaunchConfiguration('lrCheckTresh',      default = 5)
     monoResolution     = LaunchConfiguration('monoResolution',  default = '400p')
+
+    mxId         = LaunchConfiguration('mxId',      default = 'x')
+    usb2Mode     = LaunchConfiguration('usb2Mode',  default = False)
+    poeMode      = LaunchConfiguration('poeMode',   default = False)
+    imuMode      = LaunchConfiguration('imuMode', default = '1')
+    angularVelCovariance  = LaunchConfiguration('angularVelCovariance', default = 0.02)
+    linearAccelCovariance = LaunchConfiguration('linearAccelCovariance', default = 0.02)
+    enableRosBaseTimeUpdate       = LaunchConfiguration('enableRosBaseTimeUpdate', default = False)
 
     declare_camera_model_cmd = DeclareLaunchArgument(
         'camera_model',
@@ -152,6 +159,7 @@ def generate_launch_description():
                                               'cam_roll'    : cam_roll,
                                               'cam_pitch'   : cam_pitch,
                                               'cam_yaw'     : cam_yaw}.items())
+    
     yolov6_spatial_node = launch_ros.actions.Node(
         package='oakd_cam', executable='yolov6_spatial_node',
         output='screen',
@@ -164,21 +172,25 @@ def generate_launch_description():
                     {'subpixel': subpixel},
                     {'lrCheckTresh': lrCheckTresh},
                     {'confidence': confidence},
+                    {'mxId':                    mxId},
+                    {'usb2Mode':                usb2Mode},
+                    {'poeMode':                 poeMode},
+                    {'imuMode':                 imuMode},
+                    {'angularVelCovariance':    angularVelCovariance},
+                    {'linearAccelCovariance':   linearAccelCovariance},
+                    {'enableRosBaseTimeUpdate': enableRosBaseTimeUpdate}
                     ],
         condition=IfCondition(LaunchConfiguration('spatial_camera'))
     )
 
-    yolov6_node = launch_ros.actions.Node(
-        package='oakd_cam', executable='yolov6_node',
-        output='screen',
-        parameters=[{'tf_prefix': tf_prefix},
-                    {'camera_param_uri': camera_param_uri},
-                    {'sync_nn': sync_nn},
-                    {'nnName': nnName},
-                    {'resourceBaseFolder': resourceBaseFolder},
-                    ],
-        condition=UnlessCondition(LaunchConfiguration('spatial_camera'))
-    )
+    config_dir = os.path.join(get_package_share_directory('oakd_cam'), 'config')
+    filter_madgwick_node = launch_ros.actions.Node(
+                package='imu_filter_madgwick',
+                executable='imu_filter_madgwick_node',
+                name='imu_filter',
+                output='screen',
+                parameters=[os.path.join(config_dir, 'imu_filter.yaml')],
+            )
 
     rviz_node = launch_ros.actions.Node(
             package='rviz2', executable='rviz2', output='screen',
@@ -204,14 +216,14 @@ def generate_launch_description():
     ld.add_action(declare_resourceBaseFolder_cmd)
     ld.add_action(declare_confidence_cmd)
     ld.add_action(declare_sync_nn_cmd)
-    ld.add_action(urdf_launch)
+    # ld.add_action(urdf_launch)
 
     ld.add_action(declare_subpixel_cmd)
     ld.add_action(declare_lrCheckTresh_cmd)
     ld.add_action(declare_monoResolution_cmd)
 
     ld.add_action(yolov6_spatial_node)
-    ld.add_action(yolov6_node)
+    ld.add_action(filter_madgwick_node)
 
     return ld
 
