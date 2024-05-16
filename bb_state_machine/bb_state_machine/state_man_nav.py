@@ -1,6 +1,4 @@
 import csv
-from geometry_msgs.msg import Twist
-from std_msgs.msg import String
 from bb_state_machine.tools import BaseState
 import numpy as np
 
@@ -50,6 +48,7 @@ class ManNav(BaseState):
                         self.start_pose[2] -= 2 * np.pi
                 else:
                     self.status = "COMPLETED"
+                    return
 
     def exit(self):
         self.commands = []

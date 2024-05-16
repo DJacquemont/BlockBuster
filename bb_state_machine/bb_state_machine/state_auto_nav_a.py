@@ -10,6 +10,7 @@ class AutoNavA(BaseState):
         self.current_waypoint = None
         self.waypoint_index = 0
         self.goal_reached = True
+        self.is_nav_complete_counter = 0
 
     def enter(self):
         self.logger.info("Entering state: AUTO_NAV_A")
@@ -24,7 +25,12 @@ class AutoNavA(BaseState):
     def execute(self):
 
         if not self.goal_reached:
-            self.goal_reached = self.action_interface('is_nav_complete')
+            self.is_nav_complete_counter += 1
+
+            if self.is_nav_complete_counter >= 100:
+                self.goal_reached = self.action_interface('is_nav_complete')
+                self.is_nav_complete_counter = 0
+
             if self.goal_reached == True:
                 self.waypoint_index += 1
                 if self.waypoint_index < len(self.waypoints):

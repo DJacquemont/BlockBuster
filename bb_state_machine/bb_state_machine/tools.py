@@ -8,6 +8,9 @@ class SharedData:
         self._x = 0
         self._y = 0
         self._theta = 0
+        self._pitch = 0
+
+        self._detection_dict = {}
         
 
     @property
@@ -23,16 +26,30 @@ class SharedData:
         return self._theta
     
     @property
+    def pitch(self):
+        return self._pitch
+    
+    @property
     def data_path(self):
         return self._data_path
+    
+    @property
+    def detection_dict(self):
+        return self._detection_dict
 
     def update_position(self, x, y, theta):
         self._x = x
         self._y = y
         self._theta = theta
 
+    def update_pitch(self, pitch):
+        self._pitch = pitch
+
     def update_data_path(self, data_path):
         self._data_path = data_path
+
+    def update_detection_dict(self, detection_dict):
+        self._detection_dict = detection_dict
 
 class RobotStateMachine:
     def __init__(self, logger):
