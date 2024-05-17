@@ -81,17 +81,20 @@ class RobotStateMachine:
     def determine_next_state(self):
         
         current_name = self.current_mission.name
+        self.status = "COMPLETED"
+        self.logger.info("All missions completed.")
+        return None
         
-        if current_name == "MISSION_1":
-            return "MISSION_2"
+        # if current_name == "MISSION_1":
+        #     return "MISSION_2"
 
-        elif current_name == "MISSION_2":
-            return "MISSION_3"
+        # elif current_name == "MISSION_2":
+        #     return "MISSION_3"
         
-        else:
-            self.status = "COMPLETED"
-            self.logger.info("All missions completed.")
-            return None
+        # else:
+        #     self.status = "COMPLETED"
+        #     self.logger.info("All missions completed.")
+        #     return None
 
 
 class BaseState(ABC):

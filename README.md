@@ -89,16 +89,16 @@ Once the workspace is built, the ROS2 nodes can be run.
 
 ### 1. Robot HARDWARE
 
-To start the robot hardware (once the robot's hardware is connected to the laptop), run the following command:
+To start the robot hardware (once the robot's hardware is connected to the laptop), execute the file `robot_start.sh`, or run the following command:
 ```
-./robot_start.sh
+ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
 ```
 
 ### 2. Robot SIMULATION (ONLY for AMD64 architecture)
 
 To start the robot simulation, run the following command:
 ```
-./sim_start.sh
+ros2 launch articubot_one launch_sim.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
 ```
 
 ### 3. Other Nodes

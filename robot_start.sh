@@ -12,7 +12,7 @@ echo -e "Enter your choice (1/2/3/4): \c"
 read choice
 
 echo -e "\nSearching for colcon_ws directory..."
-colcon_dir=$(find /home -type d -name "colcon_ws" 2>/dev/null | head -n 1)
+colcon_dir=$(find /root -type d -name "colcon_ws" 2>/dev/null | head -n 1)
 if [[ -z "$colcon_dir" ]]; then
     echo "colcon_ws directory not found."
     exit 1
