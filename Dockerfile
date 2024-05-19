@@ -33,6 +33,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create colcon workspace
 WORKDIR /root/colcon_ws/src
 
+# Build the serial library
+WORKDIR /root
+RUN git clone https://github.com/joshnewans/serial.git
+WORKDIR /root/serial
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash; make" && \
+    make install
+
 # Optimizing the .bashrc entries
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
     echo 'cd() { builtin cd "$@" && ls; }' >> /root/.bashrc
