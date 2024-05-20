@@ -204,19 +204,19 @@ int main(int argc, char** argv) {
         height = 480;
     }
 
-    dai::rosBridge::ImageConverter rgbConverter(tfPrefix + "_rgb_camera_optical_frame", false);
-    auto rgbCameraInfo = rgbConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_A, -1, -1);
-    dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> rgbPublish(colorQueue,
-                                                                                       node,
-                                                                                       std::string("color/image"),
-                                                                                       std::bind(&dai::rosBridge::ImageConverter::toRosMsg,
-                                                                                                 &rgbConverter,  // since the converter has the same frame name
-                                                                                                                 // and image type is also same we can reuse it
-                                                                                                 std::placeholders::_1,
-                                                                                                 std::placeholders::_2),
-                                                                                       30,
-                                                                                       rgbCameraInfo,
-                                                                                       "color");
+    // dai::rosBridge::ImageConverter rgbConverter(tfPrefix + "_rgb_camera_optical_frame", false);
+    // auto rgbCameraInfo = rgbConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_A, -1, -1);
+    // dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> rgbPublish(colorQueue,
+    //                                                                                    node,
+    //                                                                                    std::string("color/image"),
+    //                                                                                    std::bind(&dai::rosBridge::ImageConverter::toRosMsg,
+    //                                                                                              &rgbConverter,  // since the converter has the same frame name
+    //                                                                                                              // and image type is also same we can reuse it
+    //                                                                                              std::placeholders::_1,
+    //                                                                                              std::placeholders::_2),
+    //                                                                                    30,
+    //                                                                                    rgbCameraInfo,
+    //                                                                                    "color");
 
     dai::rosBridge::SpatialDetectionConverter detConverter(tfPrefix + "_rgb_camera_optical_frame", 416, 416, false);
     dai::rosBridge::BridgePublisher<depthai_ros_msgs::msg::SpatialDetectionArray, dai::SpatialImgDetections> detectionPublish(
@@ -226,16 +226,16 @@ int main(int argc, char** argv) {
         std::bind(&dai::rosBridge::SpatialDetectionConverter::toRosMsg, &detConverter, std::placeholders::_1, std::placeholders::_2),
         30);
 
-    dai::rosBridge::ImageConverter depthConverter(tfPrefix + "_right_camera_optical_frame", true);
-    auto rightCameraInfo = depthConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_C, width, height);
-    dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> depthPublish(
-        depthQueue,
-        node,
-        std::string("stereo/depth"),
-        std::bind(&dai::rosBridge::ImageConverter::toRosMsg, &depthConverter, std::placeholders::_1, std::placeholders::_2),
-        30,
-        rightCameraInfo,
-        "stereo");
+    // dai::rosBridge::ImageConverter depthConverter(tfPrefix + "_right_camera_optical_frame", true);
+    // auto rightCameraInfo = depthConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_C, width, height);
+    // dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> depthPublish(
+    //     depthQueue,
+    //     node,
+    //     std::string("stereo/depth"),
+    //     std::bind(&dai::rosBridge::ImageConverter::toRosMsg, &depthConverter, std::placeholders::_1, std::placeholders::_2),
+    //     30,
+    //     rightCameraInfo,
+    //     "stereo");
 
     dai::rosBridge::ImuConverter imuConverter(tfPrefix + "_imu_frame", imuMode, linearAccelCovariance, angularVelCovariance);
     if(enableRosBaseTimeUpdate) {
@@ -251,9 +251,9 @@ int main(int argc, char** argv) {
         "imu");
 
     imuPublish.addPublisherCallback();
-    depthPublish.addPublisherCallback();
+    // depthPublish.addPublisherCallback();
     detectionPublish.addPublisherCallback();
-    rgbPublish.addPublisherCallback();  // addPublisherCallback works only when the dataqueue is non blocking.
+    // rgbPublish.addPublisherCallback();  // addPublisherCallback works only when the dataqueue is non blocking.
 
     rclcpp::spin(node);
 

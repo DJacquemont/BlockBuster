@@ -76,6 +76,7 @@ class StateMachineNode(Node):
 
     def timer_sm_callback(self):        
         self.state_machine.execute()
+        self.get_logger().info(f'Duplo dict: {self.shared_data.detection_dict}')
 
     def imu_callback(self, msg):
         pitch, _, _ = quaternion_to_euler(msg.orientation.x,
@@ -95,7 +96,9 @@ class StateMachineNode(Node):
                 point_in_camera_frame.point.y = detection.position.y
                 point_in_camera_frame.point.z = detection.position.z
                 point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=0.5))
-                object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y, point_in_base_frame.point.z)
+                
+                # Only consider x and y coordinates
+                object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y)
 
                 already_stored = False
                 for object_id, stored_position in detection_dict.items():
@@ -107,7 +110,7 @@ class StateMachineNode(Node):
                         detection_dict[object_id] = tuple(ema_position)
                         break
                 
-                if already_stored == False:
+                if not already_stored:
                     detection_dict[self.get_new_detection_id(detection_dict)] = object_position
             
                 self.shared_data.update_detection_dict(detection_dict)
