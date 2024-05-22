@@ -11,14 +11,15 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from std_msgs.msg import Float64MultiArray
 from depthai_ros_msgs.msg import SpatialDetectionArray
-from geometry_msgs.msg import PointStamped, Pose, PoseStamped
-import tf2_geometry_msgs
+from geometry_msgs.msg import PointStamped, PoseStamped
+from geometry_msgs.msg import WrenchStamped
 from visualization_msgs.msg import Marker, MarkerArray
 import numpy as np
 from nav2_simple_commander.robot_navigator import BasicNavigator
 import math
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from nav2_msgs.srv import LoadMap
 
 
 class StateMachineNode(Node):
@@ -26,6 +27,8 @@ class StateMachineNode(Node):
         super().__init__('state_machine_node')
 
         self.declare_parameter('data_path', '/src/bb_state_machine/config')
+        self.declare_parameter('map_1', '')
+        self.declare_parameter('map_2', '')
 
         self.shared_data = SharedData()
         self.shared_data.update_data_path(self.get_parameter('data_path').get_parameter_value().string_value)
@@ -37,18 +40,25 @@ class StateMachineNode(Node):
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel_mn', 10)
         self.servo_pub = self.create_publisher(Float64MultiArray, '/storage_servo/commands', 10)
         self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1)
+        self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1)
 
         self.callback_group = MutuallyExclusiveCallbackGroup()
         self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1, callback_group=self.callback_group)
         self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
 
         self.distance_threshold = 0.1
-        self.alpha = 0.2 # EMA coefficient
+        self.alpha = 0.4 # EMA coefficient
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.navigator = BasicNavigator()
         self.display_marker = True
         self.navigator.waitUntilNav2Active()
+
+        self.map_1_url = self.get_parameter('map_1').get_parameter_value().string_value
+        self.map_2_url = self.get_parameter('map_2').get_parameter_value().string_value
+        self.map_service_client = self.create_client(LoadMap, '/map_server/load_map')
+        while not self.map_service_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /map_server/load_map not available, waiting again...')
 
         self.state_machine = RobotStateMachine(self.get_logger())
         self.state_machine.add_mission("MISSION_1", Mission1("MISSION_1", self.shared_data, self.perform_action, self.get_logger()))
@@ -85,6 +95,11 @@ class StateMachineNode(Node):
                                           msg.orientation.w)
         # self.get_logger().info(f'Pitch: {pitch}')
         self.shared_data.update_pitch(pitch)
+
+    def sys_info_callback(self, msg):
+        battery_level = msg.wrench.force.x
+        duplo_cnt = msg.wrench.torque.z
+        self.get_logger().info(f'Received system info: Battery level: {battery_level}, Duplo count: {duplo_cnt}')
 
     def yolov6_callback(self, msg):
         detection_dict = self.shared_data.detection_dict
@@ -169,9 +184,41 @@ class StateMachineNode(Node):
         elif action_type == 'is_nav_complete':
             return self.navigator.isTaskComplete()
         elif action_type == 'abort_navigation':
-            return self.navigator.cancelTask()
+            self.navigator.cancelTask()
+        elif action_type == 'set_initial_pose':
+            initial_pose = PoseStamped()
+            initial_pose.header.frame_id = 'map'
+            initial_pose.header.stamp = self.navigator.get_clock().now().to_msg()
+            initial_pose.pose.position.x = float(kwargs.get('initial_x', 0))
+            initial_pose.pose.position.y = float(kwargs.get('initial_y', 0))
+            initial_pose.pose.orientation.z = math.sin(float(kwargs.get('initial_theta', 0)) / 2.0)
+            initial_pose.pose.orientation.w = math.cos(float(kwargs.get('initial_theta', 0)) / 2.0)
+            self.navigator.setInitialPose(initial_pose)
         elif action_type == 'log_info':
             self.get_logger().info(kwargs.get('message', ''))
+        elif action_type == 'load_map':
+            map_name = kwargs.get('map_name', '')
+            if map_name == 'map_1':
+                self.load_map(self.map_1_url)
+            elif map_name == 'map_2':
+                self.load_map(self.map_2_url)
+            else:
+                self.get_logger().error(f"Map name '{map_name}' not found in parameters.")
+
+    def load_map(self, map_url):
+        request = LoadMap.Request()
+        request.map_url = map_url
+
+        future = self.map_service_client.call_async(request)
+        future.add_done_callback(self.map_response_callback)
+
+    def map_response_callback(self, future):
+        try:
+            response = future.result()
+            self.get_logger().info(f"Map loaded successfully: {response}")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed: {e}")
+
 
 def quaternion_to_euler(x, y, z, w):
     t0 = +2.0 * (w * x + y * z)
