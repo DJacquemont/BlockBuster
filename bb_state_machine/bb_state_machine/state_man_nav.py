@@ -1,6 +1,6 @@
 import csv
-from bb_state_machine.tools import BaseState
 import numpy as np
+from bb_state_machine.tools import BaseState
 
 class ManNav(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename):
@@ -21,9 +21,7 @@ class ManNav(BaseState):
         if self.commands:
             self.current_command = self.commands[self.command_index]
             self.goal_reached = False
-            self.start_pose = [self.shared_data.x, self.shared_data.y, self.shared_data.theta % (2 * np.pi)]
-            if self.start_pose[2] > np.pi:
-                self.start_pose[2] -= 2 * np.pi
+            self.start_pose = self.normalize_pose([self.shared_data.x, self.shared_data.y, self.shared_data.theta])
             self.logger.info(f'Starting pose: {self.start_pose}')
 
     def exit(self):
@@ -49,25 +47,27 @@ class ManNav(BaseState):
                     self.command_index += 1
                     self.current_command = self.commands[self.command_index]
                     self.goal_reached = False
-                    self.start_pose = [self.shared_data.x, self.shared_data.y, self.shared_data.theta % (2 * np.pi)]
-                    if self.start_pose[2] > np.pi:
-                        self.start_pose[2] -= 2 * np.pi
+                    self.start_pose = self.normalize_pose([self.shared_data.x, self.shared_data.y, self.shared_data.theta])
                 else:
                     self.status = "COMPLETED"
-                    return
-                
-    """
-    Execute a rotation command.
-    """
+
     def angle_difference(self, target, current):
         diff = (target - current) % (2 * np.pi)
         if diff > np.pi:
             diff -= 2 * np.pi
         return diff
 
-    """
-    Load the commands from the command file.
-    """
+    def normalize_angle(self, angle):
+        angle = angle % (2 * np.pi)
+        if angle > np.pi:
+            angle -= 2 * np.pi
+        return angle
+
+    def normalize_pose(self, pose):
+        x, y, theta = pose
+        theta = self.normalize_angle(theta)
+        return [x, y, theta]
+
     def load_commands(self):
         try:
             with open(self.command_file, mode='r') as file:
@@ -75,26 +75,17 @@ class ManNav(BaseState):
                 self.commands = []
                 for line in reader:
                     if len(line) == 2:
-                        command = (line[0], line[1], None)
-                        self.commands.append(command)
+                        self.commands.append((line[0], line[1], None))
                     elif len(line) == 3:
-                        command = (line[0], line[1], line[2])
-                        self.commands.append(command)
+                        self.commands.append((line[0], line[1], line[2]))
                     else:
                         self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
         except IOError:
-            self.logger.error("Failed to read the command file, looking in: " + self.command_file)
+            self.logger.error(f"Failed to read the command file: {self.command_file}")
 
-    """
-    Execute a rotation command.
-    """
     def execute_rotation(self, angle, angular_speed):
-        current_theta = self.shared_data.theta % (2 * np.pi)
-        if current_theta > np.pi:
-            current_theta -= 2 * np.pi
-        target_theta = angle % (2 * np.pi)
-        if target_theta > np.pi:
-            target_theta -= 2 * np.pi
+        current_theta = self.normalize_angle(self.shared_data.theta)
+        target_theta = self.normalize_angle(angle)
 
         angle_diff = self.angle_difference(target_theta, current_theta)
 
@@ -110,9 +101,6 @@ class ManNav(BaseState):
         
         self.action_interface('publish_cmd_vel', angular_z=target_theta_speed)
 
-    """
-    Execute a translation command.
-    """
     def execute_translation(self, distance, speed):
         goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
         goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])
@@ -131,9 +119,6 @@ class ManNav(BaseState):
             
         self.action_interface('publish_cmd_vel', linear_x=target_x_speed)
 
-    """
-    Execute a storage command.
-    """
     def command_storage(self, command):
         if command == "c":
             self.action_interface('publish_servo_cmd', servo_command=[0.0])
