@@ -5,9 +5,9 @@ on:
     branches:
       - main
 
-  push:
-    branches:
-      - sm_dev
+  # push:
+  #   branches:
+  #     - sm_dev
       # - nav_test
       # - main
 

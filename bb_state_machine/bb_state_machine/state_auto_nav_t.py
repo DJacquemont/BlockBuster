@@ -214,9 +214,6 @@ class AutoNavT(BaseState):
         if self.goal_reached:
             self.goal_reached = False
             self.rotation_accumulated += target_increment
-
-            self.logger.info(f"Rotation target: {self.rotation_target}")
-            self.logger.info(f"Rotation accumulated: {self.rotation_accumulated}")
         
             if self.rotation_accumulated >= 2 * np.pi - 0.1:
                 self.action_interface('publish_cmd_vel', angular_z=0)

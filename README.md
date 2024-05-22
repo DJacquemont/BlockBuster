@@ -91,14 +91,14 @@ Once the workspace is built, the ROS2 nodes can be run.
 
 To start the robot hardware (once the robot's hardware is connected to the laptop), execute the file `robot_start.sh`, or run the following command:
 ```
-ros2 launch articubot_one launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
+ros2 launch blockbuster_core launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
 ```
 
 ### 2. Robot SIMULATION (ONLY for AMD64 architecture)
 
 To start the robot simulation, run the following command:
 ```
-ros2 launch articubot_one launch_sim.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
+ros2 launch blockbuster_core launch_sim.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
 ```
 
 ### 3. Other Nodes
@@ -112,7 +112,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleo
 
 Or with the joystick:
 ```
-ros2 launch articubot_one joystick.launch.py
+ros2 launch blockbuster_core joystick.launch.py
 ```
 
 #### 3.2. Rviz
