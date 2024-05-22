@@ -22,6 +22,11 @@ class SlopeClimbing(BaseState):
             self.start_pose[2] -= 2 * np.pi
         self.logger.info(f'Starting pose: {self.start_pose}')
 
+    def exit(self):
+        self.angle_reached = True
+        self.goal_reached = True
+        self.start_pose = None
+
     def execute(self):
         if self.status == "RUNNING":
 
@@ -37,11 +42,9 @@ class SlopeClimbing(BaseState):
                 self.status == "COMPLETED"
                 return
 
-    def exit(self):
-        self.angle_reached = True
-        self.goal_reached = True
-        self.start_pose = None
-
+    """
+    Execute a translation command.
+    """
     def execute_translation(self, distance, speed):
         goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
         goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])

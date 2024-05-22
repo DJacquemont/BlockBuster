@@ -11,22 +11,22 @@ class Mission1(SuperState):
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger, filename="/test_auto_nav_t.csv"))
         self.add_substate("AUTO_NAV_A", AutoNavA("AUTO_NAV_A", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))
         self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/test_man_nav.csv"))
-        self.default_substate = "AUTO_NAV_T"
+        self.default_substate = "MAN_NAV"
 
     def determine_next_state(self):
         if self.current_substate.status == 'COMPLETED' or self.current_substate.status == 'SEARCH_BREAK':
             current_ss = self.current_substate.name
             
-            # if current_ss == "MAN_NAV":
-            #     return "AUTO_NAV_A"
+            if current_ss == "MAN_NAV":
+                return "AUTO_NAV_A"
 
-            # elif current_ss == "AUTO_NAV_A":
-            #     return "AUTO_NAV_T"  # Proceed to MAN_NAV after AUTO_NAV_A
+            elif current_ss == "AUTO_NAV_A":
+                return "AUTO_NAV_T"  # Proceed to MAN_NAV after AUTO_NAV_A
 
-            # elif current_ss == "AUTO_NAV_T":
-            #     self.status = "COMPLETED"
+            elif current_ss == "AUTO_NAV_T":
+                self.status = "COMPLETED"
 
-            self.status = "COMPLETED"
+            # self.status = "COMPLETED"
 
         return None  # Default to no transition if not specified above
     

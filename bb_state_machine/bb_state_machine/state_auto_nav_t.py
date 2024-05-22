@@ -2,6 +2,7 @@ from bb_state_machine.tools import BaseState
 import time
 import math
 import csv
+import numpy as np
 
 class AutoNavT(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename):
@@ -10,16 +11,40 @@ class AutoNavT(BaseState):
         self.command_file = shared_data.data_path + filename
         self.waypoints = []
         self.target_theta_speed = 0.4
+        self.target_x_speed = 0.3
         self.tracking = None
         self.tracking_id = None
         self.state = None
         self.rotation_start_time = None
+        self.duplo_approach_status = None
+        self.goal_reached = None
+        self.target_locked = None
+        self.start_pose = None
+        self.alpha_rotation = None
+        self.rotation_accumulated = 0
+        self.rotation_target = None
 
     def enter(self):
         self.logger.info("Entering state: AUTO_NAV_T")
         self.status = "RUNNING"
         self.load_waypoints()
         self.state = "TRACKING"
+        self.goal_reached = False
+        self.target_locked = False
+
+    def exit(self):
+        self.waypoints = []
+        self.tracking = None
+        self.tracking_id = None
+        self.state = None
+        self.rotation_start_time = None
+        self.duplo_approach_status = None
+        self.goal_reached = None
+        self.start_pose = None
+        self.target_locked = None
+        self.alpha_rotation = None
+        self.rotation_accumulated = 0
+        self.rotation_target = None   
 
     def execute(self):        
         # TODO: not always the first duplo if the first duplo is closer be not in a valid zone
@@ -29,13 +54,9 @@ class AutoNavT(BaseState):
         elif self.state == "ROTATION":
             self.executing_360()
 
-    def exit(self):
-        self.waypoints = []
-        self.tracking = None
-        self.tracking_id = None
-        self.state = None
-
-
+    """
+    Load the waypoints from the command file
+    """
     def load_waypoints(self):
         try:
             with open(self.command_file, mode='r') as file:
@@ -53,6 +74,9 @@ class AutoNavT(BaseState):
         except IOError:
             self.logger.error("Failed to read the command file, looking in: " + self.command_file)
 
+    """
+    Search for the closest waypoint or duplo and navigate to it
+    """
     def searching_duplo(self):
         
         # Find the closest duplo
@@ -115,8 +139,8 @@ class AutoNavT(BaseState):
                 target_x, target_y = self.shared_data.detection_dict[self.tracking_id]
                 self.action_interface('navigate_to_pose', goal_x=target_x, goal_y=target_y, goal_theta=0)
         else:
-            # We are locked on a target
-            if dist_closest_waypoint <= 0.25:
+            if dist_closest_waypoint <= 0.25 and not self.target_locked:
+
                 if self.tracking == "WP":
                     assert i_closest_waypoint == self.tracking_id
                     self.logger.info(f"Waypoint reached: {self.waypoints[self.tracking_id]}")
@@ -125,31 +149,130 @@ class AutoNavT(BaseState):
                     self.tracking = None
                     self.tracking_id = None
                     self.state = "ROTATION"
+
                 elif self.tracking == "DP":
                     self.logger.info(f"Following Duplo, but waypoint reached: {self.waypoints[i_closest_waypoint]}")
                     self.waypoints.pop(i_closest_waypoint)
-            if dist_closest_duplo <= 0.05:
-                # consider duplo eaten
-                assert i_closest_duplo == self.tracking_id
-                self.logger.info(f"Duplo reached: {self.shared_data.detection_dict[i_closest_duplo]}")
-                self.action_interface('abort_navigation')
-                del self.shared_data.detection_dict[i_closest_duplo]
-                self.tracking = None
-                self.tracking_id = None
-        
-    
+
+            if dist_closest_duplo <= 0.25:
+
+                self.logger.info(f"Status: {self.duplo_approach_status}")
+
+                if self.duplo_approach_status is None:
+                    self.action_interface('abort_navigation')
+                    self.duplo_approach_status = "MAN_ROT"
+                    self.target_locked = True
+                    self.goal_reached = False
+                    self.alpha_rotation = math.atan2((target_y - self.shared_data.y), (target_x - self.shared_data.x))
+                    self.start_pose = [self.shared_data.x, self.shared_data.y, self.shared_data.theta % (2 * np.pi)]
+                    if self.start_pose[2] > np.pi:
+                        self.start_pose[2] -= 2 * np.pi
+
+                elif self.duplo_approach_status == "MAN_ROT":
+
+                    self.execute_rotation(self.alpha_rotation, self.target_theta_speed)
+                    if self.goal_reached:
+                        self.duplo_approach_status = "MAN_TRANS"
+                        self.goal_reached = False
+
+                elif self.duplo_approach_status == "MAN_TRANS":
+                    self.execute_translation(0.25, self.target_x_speed)
+                    if self.goal_reached:
+                        self.duplo_approach_status = None
+                        self.start_pose = None
+                        self.target_locked = False
+                        self.alpha_rotation = None
+                
+                        assert i_closest_duplo == self.tracking_id
+                        self.logger.info(f"Duplo reached: {self.shared_data.detection_dict[i_closest_duplo]}")
+                        del self.shared_data.detection_dict[i_closest_duplo]
+                        self.tracking = None
+                        self.tracking_id = None
+                        
+
+    """
+    Calculate the difference between two angles
+    """
+    def angle_difference(self, target, current):
+        diff = (target - current) % (2 * np.pi)
+        if diff > np.pi:
+            diff -= 2 * np.pi
+        return diff
+
+    """
+    Execute a 360-degree rotation, looking for duplos
+    """
     def executing_360(self):
-        current_time = time.time()
-        if self.rotation_start_time is None:
-            self.rotation_start_time = current_time
+        target_increment = np.pi / 3  # 10-degree increments
 
-        turning_time = 2*math.pi / self.target_theta_speed
+        if self.rotation_target is None:
+            self.rotation_accumulated = 0
+            self.rotation_target = (self.shared_data.theta + target_increment) % (2 * np.pi)
+            if self.rotation_target > np.pi:
+                self.rotation_target -= 2 * np.pi
 
-        elapsed_time = current_time - self.rotation_start_time
+        if self.goal_reached:
+            self.goal_reached = False
+            self.rotation_accumulated += target_increment
 
-        if elapsed_time >= turning_time:
-            self.action_interface('publish_cmd_vel', angular_z=0)
-            self.state = "TRACKING"
-            self.rotation_start_time = None
+            self.logger.info(f"Rotation target: {self.rotation_target}")
+            self.logger.info(f"Rotation accumulated: {self.rotation_accumulated}")
+        
+            if self.rotation_accumulated >= 2 * np.pi - 0.1:
+                self.action_interface('publish_cmd_vel', angular_z=0)
+                self.state = "TRACKING"
+                self.rotation_accumulated = 0
+                self.rotation_target = None
+                return
+            else:
+                self.rotation_target = (self.shared_data.theta + target_increment) % (2 * np.pi)
+                if self.rotation_target > np.pi:
+                    self.rotation_target -= 2 * np.pi
+
+        self.execute_rotation(self.rotation_target, self.target_theta_speed)
+
+    """
+    Execute a rotation to a specific angle
+    """
+    def execute_rotation(self, angle, angular_speed):
+        current_theta = self.shared_data.theta % (2 * np.pi)
+        if current_theta > np.pi:
+            current_theta -= 2 * np.pi
+        target_theta = angle % (2 * np.pi)
+        if target_theta > np.pi:
+            target_theta -= 2 * np.pi
+
+        angle_diff = self.angle_difference(target_theta, current_theta)
+
+        self.logger.debug(f"Current theta: {current_theta}")
+        self.logger.debug(f"Target theta: {target_theta}")
+        self.logger.debug(f"Angle difference: {angle_diff}")
+
+        if abs(angle_diff) < 0.07:
+            target_theta_speed = 0
+            self.goal_reached = True
         else:
-            self.action_interface('publish_cmd_vel', angular_z=self.target_theta_speed)
+            target_theta_speed = np.sign(angle_diff) * angular_speed
+        
+        self.action_interface('publish_cmd_vel', angular_z=target_theta_speed)
+
+    """
+    Execute a translation to a specific distance
+    """
+    def execute_translation(self, distance, speed):
+        goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
+        goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])
+
+        current_distance_to_goal = np.sqrt((goal_x - self.shared_data.x) ** 2 + (goal_y - self.shared_data.y) ** 2)
+
+        self.logger.debug(f"Current pose: {[self.shared_data.x, self.shared_data.y, self.shared_data.theta]}")
+        self.logger.debug(f"Current distance to goal: {current_distance_to_goal}")
+
+        distance_tolerance = 0.1
+        if current_distance_to_goal <= distance_tolerance:
+            self.goal_reached = True
+            target_x_speed = 0
+        else:
+            target_x_speed = np.sign(distance) * speed
+            
+        self.action_interface('publish_cmd_vel', linear_x=target_x_speed)

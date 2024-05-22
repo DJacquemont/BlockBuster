@@ -1,6 +1,9 @@
 from bb_state_machine.tools import BaseState
 import numpy as np
 
+"""
+This state is used to clear the front of the robot by executing a series of translation commands.
+"""
 class FrontClearing(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, commands=[(1, 0.2), (-1, 0.2)]):
         super().__init__(name, shared_data, logger)
@@ -21,6 +24,13 @@ class FrontClearing(BaseState):
         if self.start_pose[2] > np.pi:
             self.start_pose[2] -= 2 * np.pi
         self.logger.info(f'Starting pose: {self.start_pose}')
+    
+    def exit(self):
+        self.commands = []
+        self.current_command = None
+        self.command_index = 0
+        self.goal_reached = True
+        self.start_pose = None
 
     def execute(self):
         if not self.goal_reached and self.status == "RUNNING":
@@ -39,14 +49,10 @@ class FrontClearing(BaseState):
                 else:
                     self.status = "COMPLETED"
                     return
-
-    def exit(self):
-        self.commands = []
-        self.current_command = None
-        self.command_index = 0
-        self.goal_reached = True
-        self.start_pose = None
-
+                
+    """
+    Execute a translation command.
+    """
     def execute_translation(self, distance, speed):
         goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
         goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])

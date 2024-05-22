@@ -11,22 +11,8 @@ echo "4) Build project"
 echo -e "Enter your choice (1/2/3/4): \c"
 read choice
 
-echo -e "\nSearching for colcon_ws directory..."
-colcon_dir=$(find /root -type d -name "colcon_ws" 2>/dev/null | head -n 1)
-if [[ -z "$colcon_dir" ]]; then
-    echo "colcon_ws directory not found."
-    exit 1
-else
-    echo "colcon_ws directory found."
-fi
-
-if [ ! -f "$colcon_dir/install/setup.bash" ]; then
-    echo "File install/setup.bash not found."
-    exit 1
-else
-    source "$colcon_dir/install/setup.bash"
-    echo "File install/setup.bash sourced."
-fi
+colcon_dir="colcon_ws"
+source "$colcon_dir/install/setup.bash"
 
 case $choice in
     1)

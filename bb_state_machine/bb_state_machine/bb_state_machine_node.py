@@ -21,7 +21,9 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from nav2_msgs.srv import LoadMap
 
-
+"""
+This node is the main node for the Blockbuster State Machine.
+"""
 class StateMachineNode(Node):
     def __init__(self):
         super().__init__('state_machine_node')
@@ -41,6 +43,7 @@ class StateMachineNode(Node):
         self.servo_pub = self.create_publisher(Float64MultiArray, '/storage_servo/commands', 10)
         self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1)
         self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1)
+        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 1)
 
         self.callback_group = MutuallyExclusiveCallbackGroup()
         self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1, callback_group=self.callback_group)
@@ -51,7 +54,7 @@ class StateMachineNode(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.navigator = BasicNavigator()
-        self.display_marker = True
+        self.display_marker = False
         self.navigator.waitUntilNav2Active()
 
         self.map_1_url = self.get_parameter('map_1').get_parameter_value().string_value
@@ -66,6 +69,9 @@ class StateMachineNode(Node):
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.set_mission("MISSION_1")
 
+    """
+    Timer callback for updating the robot's position and orientation.
+    """
     def timer_tf_callback(self):
         try:
             trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time())
@@ -79,15 +85,24 @@ class StateMachineNode(Node):
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
             pass
         
+    """
+    Timer callback starting the execution of the state machine.
+    """
     def start_timer_sm(self):
         self.timer_sm = self.create_timer(0.05, self.timer_sm_callback)
         self.timer_sm_delay.cancel()
         self.timer_sm_delay = None 
 
+    """
+    Timer callback for executing the state machine.
+    """
     def timer_sm_callback(self):        
         self.state_machine.execute()
-        self.get_logger().info(f'Duplo dict: {self.shared_data.detection_dict}')
+        # self.get_logger().info(f'Duplo dict: {self.shared_data.detection_dict}')
 
+    """
+    Callback for the IMU data.
+    """
     def imu_callback(self, msg):
         pitch, _, _ = quaternion_to_euler(msg.orientation.x,
                                           msg.orientation.y,
@@ -96,11 +111,23 @@ class StateMachineNode(Node):
         # self.get_logger().info(f'Pitch: {pitch}')
         self.shared_data.update_pitch(pitch)
 
+    """
+    Callback for the system information data.
+    """
     def sys_info_callback(self, msg):
         battery_level = msg.wrench.force.x
         duplo_cnt = msg.wrench.torque.z
-        self.get_logger().info(f'Received system info: Battery level: {battery_level}, Duplo count: {duplo_cnt}')
+        self.shared_data.update_system_infos(battery_level, duplo_cnt)
 
+    """
+    Callback for the odometry data.
+    """
+    def odom_callback(self, msg):
+        self.shared_data.update_odom_position(msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.orientation.z)
+
+    """
+    Callback for the YOLOv6 detections.
+    """
     def yolov6_callback(self, msg):
         detection_dict = self.shared_data.detection_dict
         for i, detection in enumerate(msg.detections):
@@ -112,7 +139,6 @@ class StateMachineNode(Node):
                 point_in_camera_frame.point.z = detection.position.z
                 point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=0.5))
                 
-                # Only consider x and y coordinates
                 object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y)
 
                 already_stored = False
@@ -156,11 +182,17 @@ class StateMachineNode(Node):
             
             self.marker_pub.publish(marker_array)
 
+    """
+    Get a new duplo detection ID.
+    """
     def get_new_detection_id(self, detection_dict):
         all_ids = list(detection_dict.keys())
         max_id = max(all_ids) if all_ids else -1
         return max_id + 1
     
+    """
+    Perform an action based on the action type. Interface between the different states and the robot's actuators.
+    """
     def perform_action(self, action_type, **kwargs):
         if action_type == 'publish_cmd_vel':
             msg = Twist()
@@ -205,6 +237,9 @@ class StateMachineNode(Node):
             else:
                 self.get_logger().error(f"Map name '{map_name}' not found in parameters.")
 
+    """
+    Load a map from a given URL.
+    """
     def load_map(self, map_url):
         request = LoadMap.Request()
         request.map_url = map_url
@@ -212,6 +247,9 @@ class StateMachineNode(Node):
         future = self.map_service_client.call_async(request)
         future.add_done_callback(self.map_response_callback)
 
+    """
+    Callback for the map service response.
+    """
     def map_response_callback(self, future):
         try:
             response = future.result()
@@ -219,7 +257,9 @@ class StateMachineNode(Node):
         except Exception as e:
             self.get_logger().error(f"Service call failed: {e}")
 
-
+"""
+Convert a quaternion to Euler angles.
+"""
 def quaternion_to_euler(x, y, z, w):
     t0 = +2.0 * (w * x + y * z)
     t1 = +1.0 - 2.0 * (x * x + y * y)
