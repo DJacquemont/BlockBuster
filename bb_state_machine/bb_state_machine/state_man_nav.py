@@ -16,7 +16,7 @@ class ManNav(BaseState):
     def enter(self):
         self.logger.info("Entering state: MAN_NAV")
         self.status = "RUNNING"
-        self.load_commands()
+        self.commands = self.load_data(self.command_file,  "commands")
         self.command_index = 0
         if self.commands:
             self.current_command = self.commands[self.command_index]
@@ -25,11 +25,7 @@ class ManNav(BaseState):
             self.logger.info(f'Starting pose: {self.start_pose}')
 
     def exit(self):
-        self.commands = []
-        self.current_command = None
-        self.command_index = 0
-        self.goal_reached = True
-        self.start_pose = None
+        self.reset_navigation_state()
 
     def execute(self):
         if not self.goal_reached and self.status == "RUNNING":
@@ -51,20 +47,12 @@ class ManNav(BaseState):
                 else:
                     self.status = "COMPLETED"
 
-    def load_commands(self):
-        try:
-            with open(self.command_file, mode='r') as file:
-                reader = csv.reader(file)
-                self.commands = []
-                for line in reader:
-                    if len(line) == 2:
-                        self.commands.append((line[0], line[1], None))
-                    elif len(line) == 3:
-                        self.commands.append((line[0], line[1], line[2]))
-                    else:
-                        self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
-        except IOError:
-            self.logger.error(f"Failed to read the command file: {self.command_file}")
+    def reset_navigation_state(self):
+        self.commands = []
+        self.current_command = None
+        self.command_index = 0
+        self.goal_reached = True
+        self.start_pose = None
 
     def command_storage(self, command):
         if command == "c":

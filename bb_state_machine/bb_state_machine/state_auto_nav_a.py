@@ -8,20 +8,20 @@ class AutoNavA(BaseState):
     def __init__(self, name: str, shared_data, action_interface, logger, filename: str):
         super().__init__(name, shared_data, action_interface, logger)
         self.command_file = shared_data.data_path + filename
-        self.waypoints: List[Tuple[float, float, float]] = []
-        self.current_waypoint: Optional[Tuple[float, float, float]] = None
-        self.waypoint_index: int = 0
-        self.goal_reached: bool = True
-        self.manually_navigating: bool = False
-        self.goal_approach_status: Optional[str] = None
-        self.target_theta_speed: float = 0.4
-        self.target_x_speed: float = 0.3
-        self.start_pose: Optional[List[float]] = None
+        self.waypoints = []
+        self.current_waypoint = None
+        self.waypoint_index = 0
+        self.goal_reached = True
+        self.manually_navigating = False
+        self.goal_approach_status = None
+        self.target_theta_speed = 0.4
+        self.target_x_speed = 0.3
+        self.start_pose = None
 
     def enter(self):
         self.logger.info("Entering state: AUTO_NAV_A")
         self.status = "RUNNING"
-        self.load_waypoints()
+        self.waypoints = self.load_data(self.command_file, "waypoints_a")
         self.waypoint_index = 0
         if self.waypoints:
             self.set_current_waypoint()
@@ -33,17 +33,6 @@ class AutoNavA(BaseState):
     def execute(self):
         if not self.goal_reached:
             self.update_navigation_status()
-
-    def load_waypoints(self):
-        try:
-            with open(self.command_file, mode='r') as file:
-                reader = csv.reader(file)
-                self.waypoints = [
-                    (float(line[0]), float(line[1]), float(line[2])) 
-                    for line in reader if len(line) == 3
-                ]
-        except (IOError, ValueError) as e:
-            self.logger.error(f"Failed to read or parse the command file {self.command_file}: {e}")
 
     def set_current_waypoint(self):
         self.current_waypoint = self.waypoints[self.waypoint_index]

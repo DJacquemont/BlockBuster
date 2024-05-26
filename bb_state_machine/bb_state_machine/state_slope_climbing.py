@@ -22,9 +22,7 @@ class SlopeClimbing(BaseState):
         self.logger.info(f'Starting pose: {self.start_pose}')
 
     def exit(self):
-        self.angle_reached = True
-        self.goal_reached = True
-        self.start_pose = None
+        self.reset_navigation_state()
 
     def execute(self):
         if self.status == "RUNNING":
@@ -38,6 +36,11 @@ class SlopeClimbing(BaseState):
             if self.goal_reached:
                 self.stop_motion()
                 self.status = "COMPLETED"
+
+    def reset_navigation_state(self):
+        self.goal_reached = True
+        self.angle_reached = True
+        self.start_pose = None
 
     def check_angle_reached(self):
         if (self.direction_up and self.shared_data.pitch > self.angle_limit) or \

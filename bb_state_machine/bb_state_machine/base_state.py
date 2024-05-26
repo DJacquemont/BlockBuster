@@ -17,6 +17,8 @@ class BaseState(ABC):
         self.status = "IDLE"
         self.distance_tolerance = 0.05
         self.angle_tolerance = 0.07
+        self.min_angular_speed = 0.2
+        self.min_linear_speed = 0.15
         pass
 
     @abstractmethod
@@ -51,12 +53,15 @@ class BaseState(ABC):
             diff -= 2 * np.pi
         return diff
 
-    def execute_rotation(self, angle, angular_speed):
+    def execute_rotation(self, angle, max_angular_speed):
         current_theta = self.normalize_angle(self.shared_data.theta)
         target_theta = self.normalize_angle(angle)
         angle_diff = self.angle_difference(target_theta, current_theta)
 
-        target_theta_speed = 0 if abs(angle_diff) < self.angle_tolerance else np.sign(angle_diff) * angular_speed
+        angular_speed = np.exp(np.abs(angle_diff)*2-1) * np.abs(max_angular_speed)
+        angular_speed = max(min(angular_speed, max_angular_speed), self.min_angular_speed)
+
+        target_theta_speed = 0 if abs(angle_diff) < self.angle_tolerance else np.sign(angle_diff) * np.abs(angular_speed)
         self.goal_reached = abs(angle_diff) < self.angle_tolerance
 
         self.action_interface('publish_cmd_vel', angular_z=target_theta_speed)
@@ -67,10 +72,57 @@ class BaseState(ABC):
             angle -= 2 * np.pi
         return angle
 
-    def execute_translation(self, distance, speed):
+    def execute_translation(self, distance, max_linear_speed):
         current_distance_to_goal = distance - np.sqrt((self.start_pose[0] - self.shared_data.x) ** 2 + (self.start_pose[1] - self.shared_data.y) ** 2)
 
-        target_x_speed = 0 if current_distance_to_goal <= self.distance_tolerance else np.sign(distance) * speed
+        linear_speed = np.exp(np.abs(current_distance_to_goal)*2-1) * np.abs(max_linear_speed)
+        linear_speed = max(min(linear_speed, max_linear_speed), self.min_linear_speed)
+
+        target_x_speed = 0 if current_distance_to_goal <= self.distance_tolerance else np.sign(distance) * linear_speed
         self.goal_reached = current_distance_to_goal <= self.distance_tolerance
             
         self.action_interface('publish_cmd_vel', linear_x=target_x_speed)
+
+    def load_data(self, file_path, data_type):
+        try:
+            with open(file_path, mode='r') as file:
+                reader = csv.reader(file)
+                target_list = []
+                for line in reader:
+                    if data_type == 'waypoints_t':
+                        if len(line) == 2:
+                            try:
+                                waypoint = (float(line[0]), float(line[1]))
+                                target_list.append(waypoint)
+                            except ValueError:
+                                self.logger.error(f"Invalid number format in line: {line}")
+                        else:
+                            self.logger.error(f"Malformed line in command file, expected 2 elements but got {len(line)}: {line}")
+
+                    elif data_type == 'commands':
+                        if len(line) == 2:
+                            target_list.append((line[0], line[1], None))
+                        elif len(line) == 3:
+                            target_list.append((line[0], line[1], line[2]))
+                        else:
+                            self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
+
+                    elif data_type == 'waypoints_a':
+                        if len(line) == 3:
+                            try:
+                                waypoint = (float(line[0]), float(line[1]), float(line[2]))
+                                target_list.append(waypoint)
+                            except ValueError:
+                                self.logger.error(f"Invalid number format in line: {line}")
+                        else:
+                            self.logger.error(f"Malformed line in command file, expected 3 elements but got {len(line)}: {line}")
+
+                    else:
+                        self.logger.error(f"Unknown data type: {data_type}")
+                        return
+            return target_list
+
+        except IOError:
+            self.logger.error(f"Failed to read the command file: {self.command_file}")
+        except ValueError as e:
+            self.logger.error(f"Failed to parse the command file {self.command_file}: {e}")
