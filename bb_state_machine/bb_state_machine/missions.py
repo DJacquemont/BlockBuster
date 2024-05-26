@@ -3,7 +3,7 @@ from bb_state_machine.state_auto_nav_t import AutoNavT
 from bb_state_machine.state_front_clearing import FrontClearing
 from bb_state_machine.state_slope_climbing import SlopeClimbing
 from bb_state_machine.state_man_nav import ManNav
-from bb_state_machine.tools import SuperState
+from bb_state_machine.super_sate import SuperState
 
 class Mission1(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):

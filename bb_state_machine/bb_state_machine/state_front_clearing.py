@@ -1,4 +1,4 @@
-from bb_state_machine.tools import BaseState
+from bb_state_machine.base_state import BaseState
 import numpy as np
 
 class FrontClearing(BaseState):

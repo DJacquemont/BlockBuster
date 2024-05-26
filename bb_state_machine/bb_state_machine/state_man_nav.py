@@ -1,6 +1,6 @@
 import csv
 import numpy as np
-from bb_state_machine.tools import BaseState
+from bb_state_machine.base_state import BaseState
 
 class ManNav(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename):
