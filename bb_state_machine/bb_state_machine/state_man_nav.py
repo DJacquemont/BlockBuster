@@ -4,7 +4,7 @@ from bb_state_machine.tools import BaseState
 
 class ManNav(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename):
-        super().__init__(name, shared_data, logger)
+        super().__init__(name, shared_data, action_interface, logger)
         self.action_interface = action_interface
         self.command_file = shared_data.data_path + filename
         self.commands = []
@@ -51,23 +51,6 @@ class ManNav(BaseState):
                 else:
                     self.status = "COMPLETED"
 
-    def angle_difference(self, target, current):
-        diff = (target - current) % (2 * np.pi)
-        if diff > np.pi:
-            diff -= 2 * np.pi
-        return diff
-
-    def normalize_angle(self, angle):
-        angle = angle % (2 * np.pi)
-        if angle > np.pi:
-            angle -= 2 * np.pi
-        return angle
-
-    def normalize_pose(self, pose):
-        x, y, theta = pose
-        theta = self.normalize_angle(theta)
-        return [x, y, theta]
-
     def load_commands(self):
         try:
             with open(self.command_file, mode='r') as file:
@@ -82,42 +65,6 @@ class ManNav(BaseState):
                         self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
         except IOError:
             self.logger.error(f"Failed to read the command file: {self.command_file}")
-
-    def execute_rotation(self, angle, angular_speed):
-        current_theta = self.normalize_angle(self.shared_data.theta)
-        target_theta = self.normalize_angle(angle)
-
-        angle_diff = self.angle_difference(target_theta, current_theta)
-
-        self.logger.debug(f"Current theta: {current_theta}")
-        self.logger.debug(f"Target theta: {target_theta}")
-        self.logger.debug(f"Angle difference: {angle_diff}")
-
-        if abs(angle_diff) < 0.07:
-            target_theta_speed = 0
-            self.goal_reached = True
-        else:
-            target_theta_speed = np.sign(angle_diff) * angular_speed
-        
-        self.action_interface('publish_cmd_vel', angular_z=target_theta_speed)
-
-    def execute_translation(self, distance, speed):
-        goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
-        goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])
-
-        current_distance_to_goal = np.sqrt((goal_x - self.shared_data.x) ** 2 + (goal_y - self.shared_data.y) ** 2)
-
-        self.logger.debug(f"Current pose: {[self.shared_data.x, self.shared_data.y, self.shared_data.theta]}")
-        self.logger.debug(f"Current distance to goal: {current_distance_to_goal}")
-
-        distance_tolerance = 0.1
-        if current_distance_to_goal <= distance_tolerance:
-            self.goal_reached = True
-            target_x_speed = 0
-        else:
-            target_x_speed = np.sign(distance) * speed
-            
-        self.action_interface('publish_cmd_vel', linear_x=target_x_speed)
 
     def command_storage(self, command):
         if command == "c":

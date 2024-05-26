@@ -6,8 +6,7 @@ from typing import List, Tuple, Optional
 
 class AutoNavA(BaseState):
     def __init__(self, name: str, shared_data, action_interface, logger, filename: str):
-        super().__init__(name, shared_data, logger)
-        self.action_interface = action_interface
+        super().__init__(name, shared_data, action_interface, logger)
         self.command_file = shared_data.data_path + filename
         self.waypoints: List[Tuple[float, float, float]] = []
         self.current_waypoint: Optional[Tuple[float, float, float]] = None
@@ -140,40 +139,3 @@ class AutoNavA(BaseState):
         self.alpha_rotation = None
         self.goal_approach_status = None
         self.manually_navigating = False
-
-    def angle_difference(self, target: float, current: float) -> float:
-        diff = (target - current) % (2 * np.pi)
-        if diff > np.pi:
-            diff -= 2 * np.pi
-        return diff
-
-    def execute_rotation(self, angle: float, angular_speed: float):
-        current_theta = self.normalize_angle(self.shared_data.theta)
-        target_theta = self.normalize_angle(angle)
-        angle_diff = self.angle_difference(target_theta, current_theta)
-
-        self.logger.debug(f"Current theta: {current_theta}, Target theta: {target_theta}, Angle difference: {angle_diff}")
-
-        target_theta_speed = 0 if abs(angle_diff) < 0.07 else np.sign(angle_diff) * angular_speed
-        self.goal_reached = abs(angle_diff) < 0.07
-
-        self.action_interface('publish_cmd_vel', angular_z=target_theta_speed)
-
-    def normalize_angle(self, angle: float) -> float:
-        angle = angle % (2 * np.pi)
-        if angle > np.pi:
-            angle -= 2 * np.pi
-        return angle
-
-    def execute_translation(self, distance: float, speed: float):
-        goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
-        goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])
-
-        current_distance_to_goal = np.sqrt((goal_x - self.shared_data.x) ** 2 + (goal_y - self.shared_data.y) ** 2)
-
-        self.logger.debug(f"Current pose: {[self.shared_data.x, self.shared_data.y, self.shared_data.theta]}, Distance to goal: {current_distance_to_goal}")
-
-        target_x_speed = 0 if current_distance_to_goal <= 0.1 else np.sign(distance) * speed
-        self.goal_reached = current_distance_to_goal <= 0.1
-
-        self.action_interface('publish_cmd_vel', linear_x=target_x_speed)

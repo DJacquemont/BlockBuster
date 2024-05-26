@@ -7,7 +7,7 @@ from bb_state_machine.tools import SuperState
 
 class Mission1(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
-        super().__init__(name, shared_data, logger)
+        super().__init__(name, shared_data, action_interface, logger)
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger, filename="/test_auto_nav_t.csv"))
         self.add_substate("AUTO_NAV_A", AutoNavA("AUTO_NAV_A", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))
         self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/test_man_nav.csv"))
@@ -33,7 +33,7 @@ class Mission1(SuperState):
     
 class Mission2(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
-        super().__init__(name, shared_data, logger)
+        super().__init__(name, shared_data, action_interface, logger)
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger, filename="/test_auto_nav_t.csv"))
         self.add_substate("AUTO_NAV_A_1", AutoNavA("AUTO_NAV_A_1", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))
         self.add_substate("AUTO_NAV_A_2", AutoNavA("AUTO_NAV_A_2", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))
@@ -64,7 +64,7 @@ class Mission2(SuperState):
     
 class Mission3(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
-        super().__init__(name, shared_data, logger)
+        super().__init__(name, shared_data, action_interface, logger)
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger, filename="/test_auto_nav_t.csv"))
         self.add_substate("AUTO_NAV_A_1", AutoNavA("AUTO_NAV_A_1", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))
         self.add_substate("AUTO_NAV_A_2", AutoNavA("AUTO_NAV_A_2", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))

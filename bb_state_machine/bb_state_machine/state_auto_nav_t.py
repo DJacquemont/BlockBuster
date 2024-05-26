@@ -6,7 +6,7 @@ import numpy as np
 
 class AutoNavT(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename):
-        super().__init__(name, shared_data, logger)
+        super().__init__(name, shared_data, action_interface, logger)
         self.action_interface = action_interface
         self.command_file = shared_data.data_path + filename
         self.waypoints = []
@@ -227,49 +227,3 @@ class AutoNavT(BaseState):
                     self.rotation_target -= 2 * np.pi
 
         self.execute_rotation(self.rotation_target, self.target_theta_speed)
-
-    """
-    Execute a rotation to a specific angle
-    """
-    def execute_rotation(self, angle, angular_speed):
-        current_theta = self.shared_data.theta % (2 * np.pi)
-        if current_theta > np.pi:
-            current_theta -= 2 * np.pi
-        target_theta = angle % (2 * np.pi)
-        if target_theta > np.pi:
-            target_theta -= 2 * np.pi
-
-        angle_diff = self.angle_difference(target_theta, current_theta)
-
-        self.logger.debug(f"Current theta: {current_theta}")
-        self.logger.debug(f"Target theta: {target_theta}")
-        self.logger.debug(f"Angle difference: {angle_diff}")
-
-        if abs(angle_diff) < 0.07:
-            target_theta_speed = 0
-            self.goal_reached = True
-        else:
-            target_theta_speed = np.sign(angle_diff) * angular_speed
-        
-        self.action_interface('publish_cmd_vel', angular_z=target_theta_speed)
-
-    """
-    Execute a translation to a specific distance
-    """
-    def execute_translation(self, distance, speed):
-        goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
-        goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])
-
-        current_distance_to_goal = np.sqrt((goal_x - self.shared_data.x) ** 2 + (goal_y - self.shared_data.y) ** 2)
-
-        self.logger.debug(f"Current pose: {[self.shared_data.x, self.shared_data.y, self.shared_data.theta]}")
-        self.logger.debug(f"Current distance to goal: {current_distance_to_goal}")
-
-        distance_tolerance = 0.1
-        if current_distance_to_goal <= distance_tolerance:
-            self.goal_reached = True
-            target_x_speed = 0
-        else:
-            target_x_speed = np.sign(distance) * speed
-            
-        self.action_interface('publish_cmd_vel', linear_x=target_x_speed)

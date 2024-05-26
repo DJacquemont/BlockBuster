@@ -1,5 +1,7 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from bb_state_machine.missions import Mission1, Mission2, Mission3
 from bb_state_machine.tools import SharedData, RobotStateMachine
 from geometry_msgs.msg import Twist, PointStamped, PoseStamped, WrenchStamped
@@ -7,14 +9,17 @@ from std_msgs.msg import Empty, Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from tf2_ros import TransformException, Buffer, TransformListener
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
+from std_msgs.msg import Float64MultiArray
 from depthai_ros_msgs.msg import SpatialDetectionArray
 from visualization_msgs.msg import Marker, MarkerArray
 from nav2_simple_commander.robot_navigator import BasicNavigator
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from nav2_msgs.srv import LoadMap
+import tf2_geometry_msgs
 import numpy as np
 import math
+
 
 class StateMachineNode(Node):
     def __init__(self):
@@ -28,6 +33,9 @@ class StateMachineNode(Node):
         self._init_state_machine()
         self._init_map_service()
 
+        self.distance_threshold = 1.0
+        self.alpha = 0.5
+        self.display_marker = True
         self.get_logger().info(f'Blockbuster State Machine node started with data path: {self.shared_data.data_path}')
 
     def _declare_parameters(self):
@@ -83,14 +91,6 @@ class StateMachineNode(Node):
         except TransformException as ex:
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
         
-        
-    """
-    Timer callback starting the execution of the state machine.
-    """
-    
-    """
-    Timer callback starting the execution of the state machine.
-    """
     def start_timer_sm(self):
         self.timer_sm = self.create_timer(0.05, self.timer_sm_callback)
         self.timer_sm_delay.cancel()
@@ -262,17 +262,13 @@ def main(args=None):
     rclpy.init(args=args)
     state_machine_node = StateMachineNode()
 
-    # Create a MultiThreadedExecutor
     executor = MultiThreadedExecutor()
 
-    # Add your node to the executor
     executor.add_node(state_machine_node)
 
     try:
-        # Use the executor to spin the node instead of calling rclpy.spin directly
         executor.spin()
     finally:
-        # Shutdown and cleanup should be handled in the finally block
         state_machine_node.destroy_node()
         rclpy.shutdown()
 

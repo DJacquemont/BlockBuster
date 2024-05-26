@@ -3,7 +3,7 @@ import numpy as np
 
 class FrontClearing(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, commands=None):
-        super().__init__(name, shared_data, logger)
+        super().__init__(name, shared_data, action_interface, logger)
         self.action_interface = action_interface
         self.commands = commands if commands is not None else [(1, 0.2), (-1, 0.2)]
         self.current_command = None
@@ -52,21 +52,3 @@ class FrontClearing(BaseState):
         self.current_command = self.commands[self.command_index]
         self.goal_reached = False
         self._set_start_pose()
-
-    def _execute_translation(self, distance, speed):
-        goal_x = self.start_pose[0] + distance * np.cos(self.start_pose[2])
-        goal_y = self.start_pose[1] + distance * np.sin(self.start_pose[2])
-
-        current_distance_to_goal = np.sqrt((goal_x - self.shared_data.x) ** 2 + (goal_y - self.shared_data.y) ** 2)
-
-        self.logger.debug(f"Current pose: {[self.shared_data.x, self.shared_data.y, self.shared_data.theta]}")
-        self.logger.debug(f"Current distance to goal: {current_distance_to_goal}")
-
-        distance_tolerance = 0.1
-        if current_distance_to_goal <= distance_tolerance:
-            self.goal_reached = True
-            target_x_speed = 0
-        else:
-            target_x_speed = np.sign(distance) * speed
-
-        self.action_interface('publish_cmd_vel', linear_x=target_x_speed)
