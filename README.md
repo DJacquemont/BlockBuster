@@ -17,6 +17,8 @@ Code implementation for our robot competing in the EPFL Robotic Competition (MAK
 
 ### 1. Nvidia Jetson Nano Connection
 
+#### 1.1 Wireless Connection
+
 1. Connect to the zerotier network (ID: `856127940c82f9a4`):
 ```
 sudo zerotier-cli join 856127940c82f9a4
@@ -35,6 +37,16 @@ sudo poweroff
 4. Disconnect from the zerotier network (ID: `856127940c82f9a4`):
 ```
 sudo zerotier-cli leave 856127940c82f9a4
+```
+
+#### 1.2 Wired Connection (Ethernet)
+
+1. Connect the Jetson Nano to the laptop with an Ethernet cable.
+
+2. SSH into the Jetson Nano:
+```
+ssh jetson@192.168.1.100
+psswd: jetson
 ```
 
 ### 2. Docker Container Setup (Run ROS2 on Jetson Nano)
@@ -93,16 +105,16 @@ Once the workspace is built, the ROS2 nodes can be run.
 
 ### 1. Robot HARDWARE
 
-To start the robot hardware (once the robot's hardware is connected to the laptop), run the following command:
+To start the robot hardware (once the robot's hardware is connected to the laptop), execute the file `robot_start.sh`, or run the following command:
 ```
-./robot_start.sh
+ros2 launch blockbuster_core launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
 ```
 
 ### 2. Robot SIMULATION (ONLY for AMD64 architecture)
 
 To start the robot simulation, run the following command:
 ```
-./sim_start.sh
+ros2 launch blockbuster_core launch_sim.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
 ```
 
 ### 3. Other Nodes
@@ -116,7 +128,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r __node:=teleo
 
 Or with the joystick:
 ```
-ros2 launch articubot_one joystick.launch.py
+ros2 launch blockbuster_core joystick.launch.py
 ```
 
 #### 3.2. Rviz

@@ -63,26 +63,14 @@ dai::Pipeline createPipeline(bool syncNN, bool subpixel, std::string nnPath, int
     imu->setBatchReportThreshold(5);
     imu->setMaxBatchReports(20);  // Get one message only for now.
 
-    if(resolution == "720p") {
-        monoResolution = dai::node::MonoCamera::Properties::SensorResolution::THE_720_P;
-    } else if(resolution == "400p") {
-        monoResolution = dai::node::MonoCamera::Properties::SensorResolution::THE_400_P;
-    } else if(resolution == "800p") {
-        monoResolution = dai::node::MonoCamera::Properties::SensorResolution::THE_800_P;
-    } else if(resolution == "480p") {
-        monoResolution = dai::node::MonoCamera::Properties::SensorResolution::THE_480_P;
-    } else {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Invalid parameter. -> monoResolution: %s", resolution.c_str());
-        throw std::runtime_error("Invalid mono camera resolution.");
-    }
-
-    monoLeft->setResolution(monoResolution);
+    monoLeft->setResolution(dai::MonoCameraProperties::SensorResolution::THE_400_P);
     monoLeft->setBoardSocket(dai::CameraBoardSocket::CAM_B);
-    monoRight->setResolution(monoResolution);
+    monoRight->setResolution(dai::MonoCameraProperties::SensorResolution::THE_400_P);
     monoRight->setBoardSocket(dai::CameraBoardSocket::CAM_C);
 
     /// setting node configs
     stereo->initialConfig.setConfidenceThreshold(confidence);
+    stereo->setExtendedDisparity(true);
     stereo->setRectifyEdgeFillColor(0);  // black, to better see the cutout
     stereo->initialConfig.setLeftRightCheckThreshold(LRchecktresh);
     stereo->setSubpixel(subpixel);
@@ -90,7 +78,7 @@ dai::Pipeline createPipeline(bool syncNN, bool subpixel, std::string nnPath, int
     stereo->initialConfig.setMedianFilter(dai::MedianFilter::KERNEL_3x3);
 
     spatialDetectionNetwork->setBlobPath(nnPath);
-    spatialDetectionNetwork->setConfidenceThreshold(0.5f);
+    spatialDetectionNetwork->setConfidenceThreshold(0.87f);
     spatialDetectionNetwork->input.setBlocking(false);
     spatialDetectionNetwork->setBoundingBoxScaleFactor(0.5);
     spatialDetectionNetwork->setDepthLowerThreshold(100);
@@ -101,7 +89,7 @@ dai::Pipeline createPipeline(bool syncNN, bool subpixel, std::string nnPath, int
     spatialDetectionNetwork->setCoordinateSize(4);
     spatialDetectionNetwork->setAnchors({10, 14, 23, 27, 37, 58, 81, 82, 135, 169, 344, 319});
     spatialDetectionNetwork->setAnchorMasks({{"side13", {3, 4, 5}}, {"side26", {1, 2, 3}}});
-    spatialDetectionNetwork->setIouThreshold(0.5f);
+    spatialDetectionNetwork->setIouThreshold(0.7f);
 
     // Link plugins CAM -> STEREO -> XLINK
     monoLeft->out.link(stereo->left);
@@ -115,7 +103,7 @@ dai::Pipeline createPipeline(bool syncNN, bool subpixel, std::string nnPath, int
     else
         colorCam->preview.link(xoutRgb->input);
 
-    spatialDetectionNetwork->out.link(xoutNN->input);
+    spatialDetectionNetwork->out.link(xoutNN->input);    
 
     stereo->depth.link(spatialDetectionNetwork->inputDepth);
     spatialDetectionNetwork->passthroughDepth.link(xoutDepth->input);
@@ -216,19 +204,19 @@ int main(int argc, char** argv) {
         height = 480;
     }
 
-    dai::rosBridge::ImageConverter rgbConverter(tfPrefix + "_rgb_camera_optical_frame", false);
-    auto rgbCameraInfo = rgbConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_A, -1, -1);
-    dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> rgbPublish(colorQueue,
-                                                                                       node,
-                                                                                       std::string("color/image"),
-                                                                                       std::bind(&dai::rosBridge::ImageConverter::toRosMsg,
-                                                                                                 &rgbConverter,  // since the converter has the same frame name
-                                                                                                                 // and image type is also same we can reuse it
-                                                                                                 std::placeholders::_1,
-                                                                                                 std::placeholders::_2),
-                                                                                       30,
-                                                                                       rgbCameraInfo,
-                                                                                       "color");
+    // dai::rosBridge::ImageConverter rgbConverter(tfPrefix + "_rgb_camera_optical_frame", false);
+    // auto rgbCameraInfo = rgbConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_A, -1, -1);
+    // dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> rgbPublish(colorQueue,
+    //                                                                                    node,
+    //                                                                                    std::string("color/image"),
+    //                                                                                    std::bind(&dai::rosBridge::ImageConverter::toRosMsg,
+    //                                                                                              &rgbConverter,  // since the converter has the same frame name
+    //                                                                                                              // and image type is also same we can reuse it
+    //                                                                                              std::placeholders::_1,
+    //                                                                                              std::placeholders::_2),
+    //                                                                                    30,
+    //                                                                                    rgbCameraInfo,
+    //                                                                                    "color");
 
     dai::rosBridge::SpatialDetectionConverter detConverter(tfPrefix + "_rgb_camera_optical_frame", 416, 416, false);
     dai::rosBridge::BridgePublisher<depthai_ros_msgs::msg::SpatialDetectionArray, dai::SpatialImgDetections> detectionPublish(
@@ -238,16 +226,16 @@ int main(int argc, char** argv) {
         std::bind(&dai::rosBridge::SpatialDetectionConverter::toRosMsg, &detConverter, std::placeholders::_1, std::placeholders::_2),
         30);
 
-    dai::rosBridge::ImageConverter depthConverter(tfPrefix + "_right_camera_optical_frame", true);
-    auto rightCameraInfo = depthConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_C, width, height);
-    dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> depthPublish(
-        depthQueue,
-        node,
-        std::string("stereo/depth"),
-        std::bind(&dai::rosBridge::ImageConverter::toRosMsg, &depthConverter, std::placeholders::_1, std::placeholders::_2),
-        30,
-        rightCameraInfo,
-        "stereo");
+    // dai::rosBridge::ImageConverter depthConverter(tfPrefix + "_right_camera_optical_frame", true);
+    // auto rightCameraInfo = depthConverter.calibrationToCameraInfo(calibrationHandler, dai::CameraBoardSocket::CAM_C, width, height);
+    // dai::rosBridge::BridgePublisher<sensor_msgs::msg::Image, dai::ImgFrame> depthPublish(
+    //     depthQueue,
+    //     node,
+    //     std::string("stereo/depth"),
+    //     std::bind(&dai::rosBridge::ImageConverter::toRosMsg, &depthConverter, std::placeholders::_1, std::placeholders::_2),
+    //     30,
+    //     rightCameraInfo,
+    //     "stereo");
 
     dai::rosBridge::ImuConverter imuConverter(tfPrefix + "_imu_frame", imuMode, linearAccelCovariance, angularVelCovariance);
     if(enableRosBaseTimeUpdate) {
@@ -263,10 +251,9 @@ int main(int argc, char** argv) {
         "imu");
 
     imuPublish.addPublisherCallback();
-    depthPublish.addPublisherCallback();
-
+    // depthPublish.addPublisherCallback();
     detectionPublish.addPublisherCallback();
-    rgbPublish.addPublisherCallback();  // addPublisherCallback works only when the dataqueue is non blocking.
+    // rgbPublish.addPublisherCallback();  // addPublisherCallback works only when the dataqueue is non blocking.
 
     rclcpp::spin(node);
 
