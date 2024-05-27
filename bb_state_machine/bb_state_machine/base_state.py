@@ -53,13 +53,16 @@ class BaseState(ABC):
             diff -= 2 * np.pi
         return diff
 
-    def execute_rotation(self, angle, max_angular_speed):
+    def execute_rotation(self, angle, max_angular_speed, control=True):
         current_theta = self.normalize_angle(self.shared_data.theta)
         target_theta = self.normalize_angle(angle)
         angle_diff = self.angle_difference(target_theta, current_theta)
 
-        angular_speed = np.exp(np.abs(angle_diff)*2-1) * np.abs(max_angular_speed)
-        angular_speed = max(min(angular_speed, max_angular_speed), self.min_angular_speed)
+        if control:
+            angular_speed = np.exp(np.abs(angle_diff)*2-1) * np.abs(max_angular_speed)
+            angular_speed = max(min(angular_speed, max_angular_speed), self.min_angular_speed)
+        else:
+            angular_speed = max_angular_speed
 
         target_theta_speed = 0 if abs(angle_diff) < self.angle_tolerance else np.sign(angle_diff) * np.abs(angular_speed)
         self.goal_reached = abs(angle_diff) < self.angle_tolerance
@@ -73,7 +76,7 @@ class BaseState(ABC):
         return angle
 
     def execute_translation(self, distance, max_linear_speed):
-        current_distance_to_goal = distance - np.sqrt((self.start_pose[0] - self.shared_data.x) ** 2 + (self.start_pose[1] - self.shared_data.y) ** 2)
+        current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.x) ** 2 + (self.start_pose[1] - self.shared_data.y) ** 2)
 
         linear_speed = np.exp(np.abs(current_distance_to_goal)*2-1) * np.abs(max_linear_speed)
         linear_speed = max(min(linear_speed, max_linear_speed), self.min_linear_speed)

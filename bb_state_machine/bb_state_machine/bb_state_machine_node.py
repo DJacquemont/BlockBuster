@@ -5,6 +5,7 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from bb_state_machine.missions import Mission1, Mission2, Mission3
 from bb_state_machine.shared_data import SharedData
 from bb_state_machine.robot_state_machine import RobotStateMachine
+from bb_state_machine.utils import quaternion_to_euler
 from geometry_msgs.msg import Twist, PointStamped, PoseStamped, WrenchStamped
 from std_msgs.msg import Empty, Float64MultiArray
 from nav_msgs.msg import Odometry
@@ -242,22 +243,6 @@ class StateMachineNode(Node):
             self.get_logger().info(f"Map loaded successfully: {response}")
         except Exception as e:
             self.get_logger().error(f"Service call failed: {e}")
-
-def quaternion_to_euler(x, y, z, w):
-    t0 = +2.0 * (w * x + y * z)
-    t1 = +1.0 - 2.0 * (x * x + y * y)
-    roll_x = math.atan2(t0, t1)
-    
-    t2 = +2.0 * (w * y - z * x)
-    t2 = +1.0 if t2 > +1.0 else t2
-    t2 = -1.0 if t2 < -1.0 else t2
-    pitch_y = math.asin(t2)
-    
-    t3 = +2.0 * (w * z + x * y)
-    t4 = +1.0 - 2.0 * (y * y + z * z)
-    yaw_z = math.atan2(t3, t4)
-    
-    return roll_x, pitch_y, yaw_z # in radians
 
 def main(args=None):
     rclpy.init(args=args)

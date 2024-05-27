@@ -194,7 +194,7 @@ class AutoNavT(BaseState):
                 if self.rotation_target > np.pi:
                     self.rotation_target -= 2 * np.pi
 
-        self.execute_rotation(self.rotation_target, self.target_theta_speed)
+        self.execute_rotation(self.rotation_target, self.target_theta_speed, control=False)
 
     def finish_rotation(self):
         self.action_interface('publish_cmd_vel', angular_z=0)
