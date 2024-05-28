@@ -31,9 +31,15 @@ class AutoNavT(BaseState):
         self.logger.info("Entering state: AUTO_NAV_T")
         self.status = "RUNNING"
         self.waypoints = self.load_data(self.command_file, "waypoints_t")
-        self.state = "TRACKING"
-        self.goal_reached = False
-        self.target_locked = False
+
+        if self.waypoints:
+            self.state = "TRACKING"
+            self.goal_reached = False
+            self.target_locked = False
+        else:
+            self.logger.error("No valid waypoints found in file: {}".format(self.command_file))
+            self.status = "COMPLETED"
+            self.reset_navigation_state()
 
     def exit(self):
         self.reset_navigation_state()

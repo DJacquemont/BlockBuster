@@ -23,9 +23,14 @@ class AutoNavA(BaseState):
         self.status = "RUNNING"
         self.waypoints = self.load_data(self.command_file, "waypoints_a")
         self.waypoint_index = 0
+        
         if self.waypoints:
             self.set_current_waypoint()
             self.initiate_navigation()
+        else:
+            self.logger.error("No valid waypoints found in file: {}".format(self.command_file))
+            self.status = "COMPLETED"
+            self.reset_navigation_state()
 
     def exit(self):
         self.reset_navigation_state()

@@ -95,6 +95,9 @@ class BaseState(ABC):
                     if data_type == 'waypoints_t':
                         if len(line) == 2:
                             try:
+                                if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
+                                    continue
+
                                 waypoint = (float(line[0]), float(line[1]))
                                 target_list.append(waypoint)
                             except ValueError:
@@ -113,6 +116,9 @@ class BaseState(ABC):
                     elif data_type == 'waypoints_a':
                         if len(line) == 3:
                             try:
+                                if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
+                                    continue
+
                                 waypoint = (float(line[0]), float(line[1]), float(line[2]))
                                 target_list.append(waypoint)
                             except ValueError:

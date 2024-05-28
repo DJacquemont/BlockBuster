@@ -18,6 +18,6 @@ def generate_launch_description():
                  'map_1': os.path.join(blockbuster_core_dir, 'maps', 'map_1.yaml'),
                  'map_2': os.path.join(blockbuster_core_dir, 'maps', 'map_2.yaml')}
             ],
-            output='screen'  # Directs the node's output to the console.
+            output='screen'
         )
     ])

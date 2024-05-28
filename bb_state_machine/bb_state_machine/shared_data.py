@@ -1,3 +1,5 @@
+import numpy as np
+
 """
 This class is used to store shared data between the different states of the robot.
 """
@@ -17,7 +19,9 @@ class SharedData:
         self._detection_dict = {}
 
         self._battery_level = 0
-        self._duplos_stored = 0        
+        self._duplos_stored = 0  
+
+        self._costmap = None      
 
     @property
     def x(self):
@@ -62,6 +66,10 @@ class SharedData:
     @property
     def duplos_stored(self):
         return self._duplos_stored
+    
+    @property
+    def costmap(self):
+        return self._costmap
 
     def update_position(self, x, y, theta):
         self._x = x
@@ -85,3 +93,28 @@ class SharedData:
     def update_system_infos(self, battery_level, duplos_stored):
         self._battery_level = battery_level
         self._duplos_stored = duplos_stored
+
+    def update_costmap(self, costmap):
+        self._costmap = costmap
+
+    def is_circle_free(self, x, y, r):
+        if self.costmap is None:
+            return False
+
+        map_x = int((x - self.costmap.metadata.origin.position.x) / self.costmap.metadata.resolution)
+        map_y = int((y - self.costmap.metadata.origin.position.y) / self.costmap.metadata.resolution)
+
+        width = self.costmap.metadata.size_x
+        height = self.costmap.metadata.size_y
+        data = np.array(self.costmap.data).reshape((height, width))
+
+        for i in range(-r, r + 1):
+            for j in range(-r, r + 1):
+                if i**2 + j**2 <= r**2:
+                    check_x = map_x + i
+                    check_y = map_y + j
+                    if check_x < 0 or check_x >= width or check_y < 0 or check_y >= height:
+                        return False
+                    if data[check_y, check_x] != 0:
+                        return False
+        return True

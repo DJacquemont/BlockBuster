@@ -17,7 +17,7 @@ from std_msgs.msg import Float64MultiArray
 from depthai_ros_msgs.msg import SpatialDetectionArray
 from visualization_msgs.msg import Marker, MarkerArray
 from nav2_simple_commander.robot_navigator import BasicNavigator
-from nav2_msgs.srv import LoadMap
+from nav2_msgs.srv import LoadMap, GetCostmap
 import tf2_geometry_msgs
 import numpy as np
 import math
@@ -26,6 +26,9 @@ import math
 class StateMachineNode(Node):
     def __init__(self):
         super().__init__('state_machine_node')
+
+        self.get_logger().info('Blockbuster State Machine node sucessfully started')
+
         self._declare_parameters()
         self._init_shared_data()
         self._init_publishers_and_subscribers()
@@ -35,10 +38,9 @@ class StateMachineNode(Node):
         self._init_state_machine()
         self._init_map_service()
 
-        self.distance_threshold = 1.0
+        self.distance_threshold = 0.3
         self.alpha = 0.5
         self.display_marker = True
-        self.get_logger().info(f'Blockbuster State Machine node started with data path: {self.shared_data.data_path}')
 
     def _declare_parameters(self):
         self.declare_parameter('data_path', '/src/bb_state_machine/config')
@@ -61,7 +63,8 @@ class StateMachineNode(Node):
 
     def _init_timers(self):
         self.timer_tf = self.create_timer(0.05, self.timer_tf_callback)
-        self.timer_sm_delay = self.create_timer(5.0, self.start_timer_sm)
+        self.timer_sm_delay = self.create_timer(5.0, self.timer_start_sm)
+        self.timer_costmap = self.create_timer(5.0, self.timer_get_costmap)
 
     def _init_tf_listener(self):
         self.tf_buffer = Buffer()
@@ -93,10 +96,14 @@ class StateMachineNode(Node):
         except TransformException as ex:
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
         
-    def start_timer_sm(self):
+    def timer_start_sm(self):
         self.timer_sm = self.create_timer(0.05, self.timer_sm_callback)
         self.timer_sm_delay.cancel()
         self.timer_sm_delay = None 
+
+    def timer_get_costmap(self):
+        costmap = self.navigator.getGlobalCostmap()
+        self.shared_data.update_costmap(costmap)
 
     def timer_sm_callback(self):        
         self.state_machine.execute()
@@ -115,7 +122,7 @@ class StateMachineNode(Node):
 
     def yolov6_callback(self, msg):
         detection_dict = self.shared_data.detection_dict
-        for i, detection in enumerate(msg.detections):
+        for detection in msg.detections:
             try:
                 point_in_camera_frame = PointStamped()
                 point_in_camera_frame.header.frame_id = "oak_rgb_camera_optical_frame"
@@ -124,6 +131,9 @@ class StateMachineNode(Node):
                 point_in_camera_frame.point.z = detection.position.z
                 point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=0.5))
                 
+                if point_in_base_frame.point.z < 0 or point_in_base_frame.point.z > 0.15:
+                    continue
+
                 object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y)
 
                 already_stored = False
@@ -136,6 +146,9 @@ class StateMachineNode(Node):
                         break
                 
                 if not already_stored:
+                    if not self.shared_data.is_circle_free(object_position[0], object_position[1], 5):
+                        continue
+
                     detection_dict[self.get_new_detection_id(detection_dict)] = object_position
             
                 self.shared_data.update_detection_dict(detection_dict)

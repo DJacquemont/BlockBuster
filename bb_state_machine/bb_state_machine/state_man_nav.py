@@ -23,6 +23,10 @@ class ManNav(BaseState):
             self.goal_reached = False
             self.start_pose = self.normalize_pose([self.shared_data.x, self.shared_data.y, self.shared_data.theta])
             self.logger.info(f'Starting pose: {self.start_pose}')
+        else:
+            self.logger.error("No valid commands found in file: {}".format(self.command_file))
+            self.status = "COMPLETED"
+            self.reset_navigation_state()
 
     def exit(self):
         self.reset_navigation_state()
