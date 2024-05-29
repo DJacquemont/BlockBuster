@@ -1,7 +1,5 @@
 from bb_state_machine.base_state import BaseState
-import time
 import math
-import csv
 import numpy as np
 
 class AutoNavT(BaseState):
@@ -15,6 +13,9 @@ class AutoNavT(BaseState):
 
     def reset_navigation_state(self):
         self.waypoints = []
+        self.spin_in_place = []
+        self.distance_threshold_wp = []
+        self.distance_threshold_duplo = 0.25
         self.tracking = None
         self.tracking_id = None
         self.state = None
@@ -30,7 +31,10 @@ class AutoNavT(BaseState):
     def enter(self):
         self.logger.info("Entering state: AUTO_NAV_T")
         self.status = "RUNNING"
-        self.waypoints = self.load_data(self.command_file, "waypoints_t")
+        commands = self.load_data(self.command_file, "waypoints_t")
+        self.waypoints = [command[:2] for command in commands]
+        self.distance_threshold_wp = [command[2] for command in commands]
+        self.spin_in_place = [command[3] for command in commands]
 
         if self.waypoints:
             self.state = "TRACKING"
@@ -120,9 +124,9 @@ class AutoNavT(BaseState):
         return None
 
     def handle_waypoint_and_duplo_reach(self, dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo):
-        if dist_closest_waypoint <= 0.25 and not self.target_locked:
+        if dist_closest_waypoint <= self.distance_threshold_wp[i_closest_waypoint] and not self.target_locked:
             self.handle_waypoint_reach(i_closest_waypoint)
-        if dist_closest_duplo <= 0.25:
+        if dist_closest_duplo <= self.distance_threshold_duplo:
             self.handle_duplo_reach(i_closest_duplo)
 
     def handle_waypoint_reach(self, i_closest_waypoint):
@@ -130,13 +134,19 @@ class AutoNavT(BaseState):
             assert i_closest_waypoint == self.tracking_id
             self.logger.info(f"Waypoint reached: {self.waypoints[self.tracking_id]}")
             self.action_interface('abort_navigation')
+            if self.spin_in_place[self.tracking_id]:
+                self.state = "ROTATION"
             self.waypoints.pop(self.tracking_id)
+            self.distance_threshold_wp.pop(self.tracking_id)
+            self.spin_in_place.pop(self.tracking_id)    
             self.tracking = None
             self.tracking_id = None
-            self.state = "ROTATION"
+
         elif self.tracking == "DP":
             self.logger.info(f"Following Duplo, but waypoint reached: {self.waypoints[i_closest_waypoint]}")
             self.waypoints.pop(i_closest_waypoint)
+            self.distance_threshold_wp.pop(i_closest_waypoint)
+            self.spin_in_place.pop(i_closest_waypoint)
 
     def handle_duplo_reach(self, i_closest_duplo):
         self.logger.info(f"Status: {self.duplo_approach_status}")

@@ -1,5 +1,3 @@
-import csv
-import numpy as np
 from bb_state_machine.base_state import BaseState
 
 class ManNav(BaseState):

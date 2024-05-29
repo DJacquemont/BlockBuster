@@ -17,7 +17,7 @@ from std_msgs.msg import Float64MultiArray
 from depthai_ros_msgs.msg import SpatialDetectionArray
 from visualization_msgs.msg import Marker, MarkerArray
 from nav2_simple_commander.robot_navigator import BasicNavigator
-from nav2_msgs.srv import LoadMap, GetCostmap
+from nav2_msgs.srv import LoadMap
 import tf2_geometry_msgs
 import numpy as np
 import math
@@ -41,6 +41,9 @@ class StateMachineNode(Node):
         self.distance_threshold = 0.3
         self.alpha = 0.5
         self.display_marker = True
+
+    def destroyNode(self):
+        super().destroy_node()
 
     def _declare_parameters(self):
         self.declare_parameter('data_path', '/src/bb_state_machine/config')
@@ -191,7 +194,6 @@ class StateMachineNode(Node):
             'publish_cmd_vel': self._publish_cmd_vel,
             'publish_servo_cmd': self._publish_servo_cmd,
             'navigate_to_pose': self._navigate_to_pose,
-            'is_nav_complete': self.navigator.isTaskComplete,
             'abort_navigation': self.navigator.cancelTask,
             'set_initial_pose': self._set_initial_pose,
             'log_info': lambda: self.get_logger().info(kwargs.get('message', '')),

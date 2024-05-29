@@ -1,5 +1,4 @@
 from bb_state_machine.base_state import BaseState
-import numpy as np
 
 class SlopeClimbing(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, speed=0.2, distance_limit=3.0, angle_limit=1.3, direction_up=True):

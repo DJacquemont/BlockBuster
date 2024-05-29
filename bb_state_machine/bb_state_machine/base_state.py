@@ -93,13 +93,12 @@ class BaseState(ABC):
                 target_list = []
                 for line in reader:
                     if data_type == 'waypoints_t':
-                        if len(line) == 2:
+                        if len(line) == 4:
                             try:
                                 if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
                                     continue
 
-                                waypoint = (float(line[0]), float(line[1]))
-                                target_list.append(waypoint)
+                                target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3])))
                             except ValueError:
                                 self.logger.error(f"Invalid number format in line: {line}")
                         else:
@@ -114,13 +113,12 @@ class BaseState(ABC):
                             self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
 
                     elif data_type == 'waypoints_a':
-                        if len(line) == 3:
+                        if len(line) == 4:
                             try:
                                 if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
                                     continue
 
-                                waypoint = (float(line[0]), float(line[1]), float(line[2]))
-                                target_list.append(waypoint)
+                                target_list.append((float(line[0]), float(line[1]), float(line[2]), float(line[3])))
                             except ValueError:
                                 self.logger.error(f"Invalid number format in line: {line}")
                         else:
