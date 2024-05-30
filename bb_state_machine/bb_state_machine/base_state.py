@@ -92,6 +92,9 @@ class BaseState(ABC):
                 reader = csv.reader(file)
                 target_list = []
                 for line in reader:
+                    if line[0].startswith('#'):
+                        continue
+                    
                     if data_type == 'waypoints_t':
                         if len(line) == 4:
                             try:
