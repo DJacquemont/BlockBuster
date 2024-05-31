@@ -75,8 +75,12 @@ class BaseState(ABC):
             angle -= 2 * np.pi
         return angle
 
-    def execute_translation(self, distance, max_linear_speed):
-        current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.x) ** 2 + (self.start_pose[1] - self.shared_data.y) ** 2)
+    def execute_translation(self, distance, max_linear_speed, use_odom=False):
+
+        if use_odom:
+            current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.odom_x) ** 2 + (self.start_pose[1] - self.shared_data.odom_y) ** 2)
+        else:
+            current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.x) ** 2 + (self.start_pose[1] - self.shared_data.y) ** 2)
 
         linear_speed = np.exp(np.abs(current_distance_to_goal)*2-1) * np.abs(max_linear_speed)
         linear_speed = max(min(linear_speed, max_linear_speed), self.min_linear_speed)
@@ -98,8 +102,8 @@ class BaseState(ABC):
                     if data_type == 'waypoints_t':
                         if len(line) == 4:
                             try:
-                                if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
-                                    continue
+                                # if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
+                                #     continue
 
                                 target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3])))
                             except ValueError:
@@ -118,8 +122,8 @@ class BaseState(ABC):
                     elif data_type == 'waypoints_a':
                         if len(line) == 4:
                             try:
-                                if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
-                                    continue
+                                # if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
+                                #     continue
 
                                 target_list.append((float(line[0]), float(line[1]), float(line[2]), float(line[3])))
                             except ValueError:

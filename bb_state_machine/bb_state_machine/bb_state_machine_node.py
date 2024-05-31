@@ -36,7 +36,7 @@ class StateMachineNode(Node):
         self._init_tf_listener()
         self._init_navigator()
         self._init_state_machine()
-        self._init_map_service()
+        self._init_maps()
 
         self.distance_threshold = 0.3
         self.alpha = 0.5
@@ -47,8 +47,8 @@ class StateMachineNode(Node):
 
     def _declare_parameters(self):
         self.declare_parameter('data_path', '/src/bb_state_machine/config')
+        self.declare_parameter('map_0', '')
         self.declare_parameter('map_1', '')
-        self.declare_parameter('map_2', '')
 
     def _init_shared_data(self):
         self.shared_data = SharedData()
@@ -65,7 +65,7 @@ class StateMachineNode(Node):
         self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
 
     def _init_timers(self):
-        self.timer_tf = self.create_timer(0.05, self.timer_tf_callback)
+        self.timer_tf = self.create_timer(0.2, self.timer_tf_callback)
         self.timer_sm_delay = self.create_timer(5.0, self.timer_start_sm)
         self.timer_costmap = self.create_timer(5.0, self.timer_get_costmap)
 
@@ -82,14 +82,11 @@ class StateMachineNode(Node):
         self.state_machine.add_mission("MISSION_1", Mission1("MISSION_1", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_2", Mission2("MISSION_2", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
-        self.state_machine.set_mission("MISSION_1")
+        self.state_machine.set_mission("MISSION_2")
 
-    def _init_map_service(self):
+    def _init_maps(self):
+        self.map_0_url = self.get_parameter('map_0').get_parameter_value().string_value
         self.map_1_url = self.get_parameter('map_1').get_parameter_value().string_value
-        self.map_2_url = self.get_parameter('map_2').get_parameter_value().string_value
-        self.map_service_client = self.create_client(LoadMap, '/map_server/load_map')
-        while not self.map_service_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /map_server/load_map not available, waiting again...')
 
     def timer_tf_callback(self):
         try:
@@ -149,8 +146,8 @@ class StateMachineNode(Node):
                         break
                 
                 if not already_stored:
-                    if not self.shared_data.is_circle_free(object_position[0], object_position[1], 5):
-                        continue
+                    # if not self.shared_data.is_circle_free(object_position[0], object_position[1], 5):
+                    #     continue
 
                     detection_dict[self.get_new_detection_id(detection_dict)] = object_position
             
@@ -239,18 +236,12 @@ class StateMachineNode(Node):
 
     def _load_map(self, **kwargs):
         map_name = kwargs.get('map_name', '')
-        if map_name == 'map_1':
-            self.load_map(self.map_1_url)
-        elif map_name == 'map_2':
-            self.load_map(self.map_2_url)
+        if map_name == 'map_0':
+            self.navigator.changeMap(self.map_0_url)
+        elif map_name == 'map_1':
+            self.navigator.changeMap(self.map_1_url)
         else:
             self.get_logger().error(f"Map name '{map_name}' not found in parameters.")
-
-    def load_map(self, map_url):
-        request = LoadMap.Request()
-        request.map_url = map_url
-        future = self.map_service_client.call_async(request)
-        future.add_done_callback(self.map_response_callback)
 
     def map_response_callback(self, future):
         try:

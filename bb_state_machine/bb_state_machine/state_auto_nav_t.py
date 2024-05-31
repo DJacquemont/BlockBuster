@@ -33,6 +33,7 @@ class AutoNavT(BaseState):
         self.status = "RUNNING"
         commands = self.load_data(self.command_file, "waypoints_t")
         self.waypoints = [command[:2] for command in commands]
+        self.logger.info(f"Waypoints are :{self.waypoints}")
         self.distance_threshold_wp = [command[2] for command in commands]
         self.spin_in_place = [command[3] for command in commands]
 

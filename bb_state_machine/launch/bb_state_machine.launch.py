@@ -15,8 +15,8 @@ def generate_launch_description():
             name='bb_state_machine_node',
             parameters=[
                 {'data_path': os.path.join(bbsm_dir, 'config'),
-                 'map_1': os.path.join(blockbuster_core_dir, 'maps', 'map_1.yaml'),
-                 'map_2': os.path.join(blockbuster_core_dir, 'maps', 'map_2.yaml')}
+                 'map_0': os.path.join(blockbuster_core_dir, 'maps', 'map_arena_l0.yaml'),
+                 'map_1': os.path.join(blockbuster_core_dir, 'maps', 'map_arena_l1.yaml')}
             ],
             output='screen'
         )

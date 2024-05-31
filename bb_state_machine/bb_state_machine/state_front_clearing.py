@@ -5,7 +5,7 @@ class FrontClearing(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, commands=None):
         super().__init__(name, shared_data, action_interface, logger)
         self.action_interface = action_interface
-        self.commands = commands if commands is not None else [(1, 0.2), (-1, 0.2)]
+        self.commands = commands if commands is not None else [(0.3, 0.2), (-0.3, 0.2)]
         self.current_command = None
         self.command_index = 0
         self.goal_reached = True
