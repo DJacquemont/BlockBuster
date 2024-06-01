@@ -28,7 +28,7 @@ class SuperState(BaseState):
     def execute(self):
         if self.current_substate and self.status == "RUNNING":
             self.current_substate.execute()
-            if self.current_substate.status == 'COMPLETED' or self.current_substate.status == 'SEARCH_BREAK':
+            if self.current_substate.status != 'RUNNING':
                 next_state = self.determine_next_state()
                 if next_state:
                     self.set_substate(next_state)

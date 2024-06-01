@@ -33,7 +33,6 @@ class AutoNavT(BaseState):
         self.status = "RUNNING"
         commands = self.load_data(self.command_file, "waypoints_t")
         self.waypoints = [command[:2] for command in commands]
-        self.logger.info(f"Waypoints are :{self.waypoints}")
         self.distance_threshold_wp = [command[2] for command in commands]
         self.spin_in_place = [command[3] for command in commands]
 
@@ -50,6 +49,10 @@ class AutoNavT(BaseState):
         self.reset_navigation_state()
 
     def execute(self):
+        if self.shared_data.duplos_stored > self.shared_data.max_duplos_stored or \
+            self.shared_data.duplo_left_z3 <= 0:
+            self.status = "STORAGE_FULL"
+
         if self.state == "TRACKING":
             self.searching_duplo()
         elif self.state == "ROTATION":

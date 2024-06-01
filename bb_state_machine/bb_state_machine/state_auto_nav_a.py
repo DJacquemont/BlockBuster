@@ -1,5 +1,4 @@
 from bb_state_machine.base_state import BaseState
-import csv
 import math
 import numpy as np
 from typing import List, Tuple, Optional

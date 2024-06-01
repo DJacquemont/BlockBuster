@@ -5,7 +5,7 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from bb_state_machine.missions import Mission1, Mission2, Mission3
 from bb_state_machine.shared_data import SharedData
 from bb_state_machine.robot_state_machine import RobotStateMachine
-from bb_state_machine.utils import quaternion_to_euler
+from bb_state_machine.utils import quaternion_to_euler, is_point_in_zone
 from geometry_msgs.msg import Twist, PointStamped, PoseStamped, WrenchStamped
 from std_msgs.msg import Empty, Float64MultiArray
 from nav_msgs.msg import Odometry
@@ -32,6 +32,9 @@ class StateMachineNode(Node):
         self.distance_threshold = 0.2
         self.alpha = 0.6
         self.display_marker = False
+
+        self.zone_3 = [4.5,0.5,7.5, 2.5]
+        self.zone_4 = [4.5,-6.5,7.5, 7.5]
 
         self._declare_parameters()
         self._init_shared_data()
@@ -95,6 +98,13 @@ class StateMachineNode(Node):
             self.shared_data.update_position(trans.transform.translation.x, trans.transform.translation.y, yaw)
         except TransformException as ex:
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
+
+        if is_point_in_zone(self.shared_data.x, self.shared_data.y, self.zone_3):
+            self.shared_data.update_current_zone("ZONE_3")
+        elif is_point_in_zone(self.shared_data.x, self.shared_data.y, self.zone_4):
+            self.shared_data.update_current_zone("ZONE_4")
+        else:
+            self.shared_data.update_current_zone("ZONE_1")
         
     def timer_start_sm(self):
         self.timer_sm = self.create_timer(0.2, self.timer_sm_callback)
@@ -213,6 +223,8 @@ class StateMachineNode(Node):
 
     def _publish_servo_cmd(self, **kwargs):
         servo_command = kwargs.get('servo_command', [0.0])
+        if servo_command[0] == 1.0:
+            self.shared_data.reset_duplos_stored()
         msg = Float64MultiArray()
         msg.data = servo_command
         self.servo_pub.publish(msg)
