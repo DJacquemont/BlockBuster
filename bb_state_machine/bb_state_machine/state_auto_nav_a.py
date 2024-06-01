@@ -16,7 +16,7 @@ class AutoNavA(BaseState):
         self.manually_navigating = False
         self.goal_approach_status = None
         self.target_theta_speed = 0.4
-        self.target_x_speed = 0.3
+        self.target_x_speed = 0.15
         self.start_pose = None
 
     def enter(self):

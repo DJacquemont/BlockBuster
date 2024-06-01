@@ -11,7 +11,6 @@ class Mission1(SuperState):
         self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger, filename="/m1_nav_t_0.csv"))
         self.add_substate("AUTO_NAV_A", AutoNavA("AUTO_NAV_A", self.shared_data, action_interface, logger, filename="/m1_nav_a_0.csv"))
         self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/m1_nav_m_0.csv"))
-        self.add_substate("FRONT_CLEARING", FrontClearing("FRONT_CLEARING", self.shared_data, action_interface, logger))
         self.default_substate = "AUTO_NAV_A"
 
     def determine_next_state(self):
@@ -19,9 +18,6 @@ class Mission1(SuperState):
             current_ss = self.current_substate.name
             
             if current_ss == "AUTO_NAV_A":
-                return "FRONT_CLEARING"
-            
-            if current_ss == "FRONT_CLEARING":
                 return "MAN_NAV"
 
             if current_ss == "MAN_NAV":

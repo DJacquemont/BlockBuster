@@ -29,6 +29,10 @@ class StateMachineNode(Node):
 
         self.get_logger().info('Blockbuster State Machine node sucessfully started')
 
+        self.distance_threshold = 0.2
+        self.alpha = 0.6
+        self.display_marker = False
+
         self._declare_parameters()
         self._init_shared_data()
         self._init_publishers_and_subscribers()
@@ -37,10 +41,6 @@ class StateMachineNode(Node):
         self._init_navigator()
         self._init_state_machine()
         self._init_maps()
-
-        self.distance_threshold = 0.3
-        self.alpha = 0.5
-        self.display_marker = True
 
     def destroyNode(self):
         super().destroy_node()
@@ -62,12 +62,12 @@ class StateMachineNode(Node):
         self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 1)
         self.callback_group = MutuallyExclusiveCallbackGroup()
         self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1, callback_group=self.callback_group)
-        self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
+        if self.display_marker:
+            self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
 
     def _init_timers(self):
         self.timer_tf = self.create_timer(0.2, self.timer_tf_callback)
-        self.timer_sm_delay = self.create_timer(5.0, self.timer_start_sm)
-        self.timer_costmap = self.create_timer(5.0, self.timer_get_costmap)
+        self.timer_sm_delay = self.create_timer(3.0, self.timer_start_sm)
 
     def _init_tf_listener(self):
         self.tf_buffer = Buffer()
@@ -82,7 +82,7 @@ class StateMachineNode(Node):
         self.state_machine.add_mission("MISSION_1", Mission1("MISSION_1", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_2", Mission2("MISSION_2", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
-        self.state_machine.set_mission("MISSION_2")
+        self.state_machine.set_mission("MISSION_1")
 
     def _init_maps(self):
         self.map_0_url = self.get_parameter('map_0').get_parameter_value().string_value
@@ -97,7 +97,7 @@ class StateMachineNode(Node):
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
         
     def timer_start_sm(self):
-        self.timer_sm = self.create_timer(0.05, self.timer_sm_callback)
+        self.timer_sm = self.create_timer(0.2, self.timer_sm_callback)
         self.timer_sm_delay.cancel()
         self.timer_sm_delay = None 
 
@@ -130,8 +130,10 @@ class StateMachineNode(Node):
                 point_in_camera_frame.point.y = detection.position.y
                 point_in_camera_frame.point.z = detection.position.z
                 point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=0.5))
+
+                self.get_logger().info(f'Detected: {point_in_base_frame.point.x, point_in_base_frame.point.y, point_in_base_frame.point.z}')
                 
-                if point_in_base_frame.point.z < 0 or point_in_base_frame.point.z > 0.15:
+                if point_in_base_frame.point.z < -0.10 or point_in_base_frame.point.z > 0.20:
                     continue
 
                 object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y)
@@ -155,6 +157,7 @@ class StateMachineNode(Node):
             except TransformException as ex:
                 self.get_logger().info(f'Could not transform oak_rgb_camera_optical_frame to base_link: {ex}')
 
+        self.get_logger().info(f"Detection dict: {self.shared_data.detection_dict}")
         self._publish_markers_if_enabled(detection_dict)
 
     def _publish_markers_if_enabled(self, detection_dict):

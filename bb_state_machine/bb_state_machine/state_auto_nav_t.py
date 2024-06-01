@@ -117,7 +117,8 @@ class AutoNavT(BaseState):
 
     def decide_tracking_target(self, dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo):
         if isinstance(i_closest_waypoint, int) and isinstance(i_closest_duplo, int):
-            return "WP" if dist_closest_waypoint < dist_closest_duplo else "DP"
+            return "DP"
+            # return "WP" if dist_closest_waypoint+1 < dist_closest_duplo else "DP"
         elif isinstance(i_closest_waypoint, int):
             return "WP"
         elif isinstance(i_closest_duplo, int):
@@ -125,7 +126,10 @@ class AutoNavT(BaseState):
         return None
 
     def handle_waypoint_and_duplo_reach(self, dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo):
-        if dist_closest_waypoint <= self.distance_threshold_wp[i_closest_waypoint] and not self.target_locked:
+
+        threshold = 0.4 if i_closest_waypoint == None else self.distance_threshold_wp[i_closest_waypoint]
+
+        if dist_closest_waypoint <= threshold and not self.target_locked:
             self.handle_waypoint_reach(i_closest_waypoint)
         if dist_closest_duplo <= self.distance_threshold_duplo:
             self.handle_duplo_reach(i_closest_duplo)
