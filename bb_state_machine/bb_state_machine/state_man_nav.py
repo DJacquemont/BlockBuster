@@ -1,4 +1,5 @@
 from bb_state_machine.base_state import BaseState
+import time
 
 class ManNav(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename):
@@ -10,6 +11,8 @@ class ManNav(BaseState):
         self.command_index = 0
         self.goal_reached = True
         self.start_pose = None
+        self.wait_start_time = None
+        self.wait_duration = None
 
     def enter(self):
         self.logger.info("Entering state: MAN_NAV")
@@ -40,6 +43,8 @@ class ManNav(BaseState):
                 self.execute_translation(float(value1), float(value2))
             elif command_type == 's':
                 self.command_storage(value1)
+            elif command_type == 'w':
+                self.execute_wait(float(value1))
 
             if self.goal_reached:
                 if self.command_index < len(self.commands) - 1:
@@ -64,3 +69,16 @@ class ManNav(BaseState):
         elif command == "o":
             self.action_interface('publish_servo_cmd', servo_command=[2.0])
             self.goal_reached = True
+
+    def execute_wait(self, wait_time):
+        if self.wait_start_time is None:
+            self.wait_start_time = time.time()
+            self.wait_duration = wait_time
+            self.logger.info(f"Starting wait for {wait_time} seconds")
+
+        elapsed_time = time.time() - self.wait_start_time
+        if elapsed_time >= self.wait_duration:
+            self.goal_reached = True
+            self.wait_start_time = None
+            self.wait_duration = None
+            self.logger.info("Wait completed")

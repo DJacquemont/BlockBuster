@@ -31,7 +31,7 @@ class StateMachineNode(Node):
 
         self.distance_threshold = 0.2
         self.alpha = 0.6
-        self.display_marker = False
+        self.display_marker = True
 
         self.zone_3 = [4.5,0.5,7.5, 2.5]
         self.zone_4 = [4.5,-6.5,7.5, 7.5]
@@ -62,7 +62,7 @@ class StateMachineNode(Node):
         self.servo_pub = self.create_publisher(Float64MultiArray, '/storage_servo/commands', 10)
         self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1)
         self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1)
-        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 1)
+        self.odom_sub = self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 1)
         self.callback_group = MutuallyExclusiveCallbackGroup()
         self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1, callback_group=self.callback_group)
         if self.display_marker:
