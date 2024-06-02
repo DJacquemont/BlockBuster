@@ -49,8 +49,12 @@ class AutoNavT(BaseState):
         self.reset_navigation_state()
 
     def execute(self):
-        if self.shared_data.duplos_stored > self.shared_data.max_duplos_stored or \
-            self.shared_data.duplo_left_z3 <= 0:
+        # if self.shared_data.duplos_stored > self.shared_data.max_duplos_stored or \
+        #     self.shared_data.duplo_left_z3 <= 0:
+        #     self.status = "STORAGE_FULL"
+
+        if True:
+            self.action_interface('abort_navigation')
             self.status = "STORAGE_FULL"
 
         if self.state == "TRACKING":

@@ -30,7 +30,7 @@ class SharedData:
 
         self._current_zone = None
 
-        self.button_pressed = False
+        self._button_pressed = False
 
         self._costmap = None
 

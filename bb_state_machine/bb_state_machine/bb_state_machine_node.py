@@ -99,9 +99,9 @@ class StateMachineNode(Node):
         except TransformException as ex:
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
 
-        if is_point_in_zone(self.shared_data.x, self.shared_data.y, self.zone_3):
+        if is_point_in_zone([self.shared_data.x, self.shared_data.y], self.zone_3):
             self.shared_data.update_current_zone("ZONE_3")
-        elif is_point_in_zone(self.shared_data.x, self.shared_data.y, self.zone_4):
+        elif is_point_in_zone([self.shared_data.x, self.shared_data.y], self.zone_4):
             self.shared_data.update_current_zone("ZONE_4")
         else:
             self.shared_data.update_current_zone("ZONE_1")

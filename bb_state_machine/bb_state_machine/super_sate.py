@@ -27,6 +27,7 @@ class SuperState(BaseState):
 
     def execute(self):
         if self.current_substate and self.status == "RUNNING":
+            self.logger.info(f"Current substate : {self.current_substate.name}")
             self.current_substate.execute()
             if self.current_substate.status != 'RUNNING':
                 next_state = self.determine_next_state()

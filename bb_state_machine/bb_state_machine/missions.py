@@ -23,28 +23,30 @@ class Mission1(SuperState):
         
         if current_ss_name == "GOTO_Z3" and current_ss_status == "COMPLETED":
             if self.shared_data.button_pressed:
-                return "PUSH_BUTTON"
-            else:
                 return "SEARCH_Z3"
+            else:
+                return "PUSH_BUTTON"
 
         elif current_ss_name == "PUSH_BUTTON" and current_ss_status == "COMPLETED":
             self.shared_data.update_button_pressed()
             return "SEARCH_Z3"
 
         elif current_ss_name == "SEARCH_Z3" and current_ss_status == "STORAGE_FULL":
-            self.status = "HOMING"
+            return "HOMING"
 
         elif current_ss_name == "HOMING" and current_ss_status == "COMPLETED":
-            self.status = "UNLOADING"
+            return "UNLOADING"
 
         elif current_ss_name == "UNLOADING" and current_ss_status == "COMPLETED":
             if self.shared_data.duplo_left_z3 <= 0:
                 self.status = "COMPLETED"
+                return None
             else:
-                self.status = "GOTO_Z3"
+                return "GOTO_Z3"
 
         elif current_ss_name == "SEARCH_Z3" and current_ss_status == "COMPLETED":
             self.status = "COMPLETED"
+            return None
     
 class Mission2(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
