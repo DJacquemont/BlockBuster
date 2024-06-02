@@ -223,7 +223,7 @@ class StateMachineNode(Node):
 
     def _publish_servo_cmd(self, **kwargs):
         servo_command = kwargs.get('servo_command', [0.0])
-        if servo_command[0] == 1.0:
+        if servo_command[0] == 2.0:
             self.shared_data.reset_duplos_stored()
         msg = Float64MultiArray()
         msg.data = servo_command

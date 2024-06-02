@@ -15,6 +15,7 @@ class ManNav(BaseState):
         self.logger.info("Entering state: MAN_NAV")
         self.status = "RUNNING"
         self.commands = self.load_data(self.command_file,  "commands")
+        self.logger.info(f"Commands man {self.commands}")
         self.command_index = 0
         if self.commands:
             self.current_command = self.commands[self.command_index]
@@ -58,8 +59,8 @@ class ManNav(BaseState):
 
     def command_storage(self, command):
         if command == "c":
-            self.action_interface('publish_servo_cmd', servo_command=[0.0])
+            self.action_interface('publish_servo_cmd', servo_command=[1.0])
             self.goal_reached = True
         elif command == "o":
-            self.action_interface('publish_servo_cmd', servo_command=[1.0])
+            self.action_interface('publish_servo_cmd', servo_command=[2.0])
             self.goal_reached = True
