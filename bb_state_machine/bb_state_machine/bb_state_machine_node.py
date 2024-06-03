@@ -71,6 +71,7 @@ class StateMachineNode(Node):
     def _init_timers(self):
         self.timer_tf = self.create_timer(0.2, self.timer_tf_callback)
         self.timer_sm_delay = self.create_timer(3.0, self.timer_start_sm)
+        self.timer_costmap = self.create_timer(1.0, self.timer_get_costmap)
 
     def _init_tf_listener(self):
         self.tf_buffer = Buffer()
@@ -158,8 +159,8 @@ class StateMachineNode(Node):
                         break
                 
                 if not already_stored:
-                    # if not self.shared_data.is_circle_free(object_position[0], object_position[1], 5):
-                    #     continue
+                    if not self.shared_data.is_circle_free(object_position[0], object_position[1], 0):
+                        continue
 
                     detection_dict[self.get_new_detection_id(detection_dict)] = object_position
             
