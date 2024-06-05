@@ -73,25 +73,16 @@ class Mission2(SuperState):
         if current_ss_name == "GOTO_Z4" and current_ss_status == "COMPLETED":
                 return "APPROACH_SLOPE_LOW"
         
-        if current_ss_name == "APPROACH_SLOPE_LOW" and current_ss_status == "COMPLETED":
+        elif current_ss_name == "APPROACH_SLOPE_LOW" and current_ss_status == "COMPLETED":
                 return "SLOPE_UP_1"
         
-        if current_ss_name == "SLOPE_UP_1" and current_ss_status == "COMPLETED":
+        elif current_ss_name == "SLOPE_UP_1" and current_ss_status == "COMPLETED":
                 return "SLOPE_UP_2"
         
-        if current_ss_name == "SLOPE_UP_2" and current_ss_status == "COMPLETED":
+        elif current_ss_name == "SLOPE_UP_2" and current_ss_status == "COMPLETED":
                 return "LEAVE_SLOPE_HIGH"
         
-        # if current_ss_name == "APPROACH_SLOPE_LOW" and current_ss_status == "COMPLETED":
-        #         return "SLOPE_DOWN"
-        
-        # if current_ss_name == "SLOPE_UP" and current_ss_status == "COMPLETED":
-        #         return "LEAVE_SLOPE_HIGH"
-        
-        # if current_ss_name == "SLOPE_DOWN" and current_ss_status == "COMPLETED":
-        #         return "SLOPE_UP"
-        
-        if current_ss_name == "LEAVE_SLOPE_HIGH" and current_ss_status == "COMPLETED":
+        elif current_ss_name == "LEAVE_SLOPE_HIGH" and current_ss_status == "COMPLETED":
                 return "SEARCH_Z4"
         
         elif current_ss_name == "SEARCH_Z4" and current_ss_status == "STORAGE_FULL":

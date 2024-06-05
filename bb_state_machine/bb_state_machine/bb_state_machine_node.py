@@ -43,7 +43,6 @@ class StateMachineNode(Node):
         self._init_tf_listener()
         self._init_navigator()
         self._init_state_machine()
-        # self._init_maps()
 
         self.get_logger().info('Done initializing !!')
 
@@ -53,8 +52,6 @@ class StateMachineNode(Node):
 
     def _declare_parameters(self):
         self.declare_parameter('data_path', '/src/bb_state_machine/config')
-        # self.declare_parameter('map_0', '')
-        # self.declare_parameter('map_1', '')
 
     def _init_shared_data(self):
         self.shared_data = SharedData()
@@ -66,7 +63,7 @@ class StateMachineNode(Node):
         self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1)
         self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1)
         self.odom_sub = self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 1)
-        # self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1)
+        self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1)
         if self.display_marker:
             self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
 
@@ -81,7 +78,7 @@ class StateMachineNode(Node):
         
     def _init_navigator(self):
         self.navigator = BasicNavigator()
-        # self.navigator.get_logger().set_level(rclpy.logging.LoggingSeverity.FATAL)
+        self.navigator.get_logger().set_level(rclpy.logging.LoggingSeverity.FATAL)
         self.navigator.waitUntilNav2Active()
 
     def _init_state_machine(self):
@@ -89,11 +86,7 @@ class StateMachineNode(Node):
         self.state_machine.add_mission("MISSION_1", Mission1("MISSION_1", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_2", Mission2("MISSION_2", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
-        self.state_machine.set_mission("MISSION_2")
-
-    # def _init_maps(self):
-    #     self.map_0_url = self.get_parameter('map_0').get_parameter_value().string_value
-    #     self.map_1_url = self.get_parameter('map_1').get_parameter_value().string_value
+        self.state_machine.set_mission("MISSION_1")
 
     def timer_tf_callback(self):
         try:
@@ -207,8 +200,7 @@ class StateMachineNode(Node):
             'navigate_to_pose': self._navigate_to_pose,
             'abort_navigation': self.navigator.cancelTask,
             'set_initial_pose': self._set_initial_pose,
-            'log_info': lambda: self.get_logger().info(kwargs.get('message', '')),
-            # 'load_map': self._load_map,
+            'clear_costmap':self._clear_costmaps,                            
         }
 
         if action_type in action_handlers:
@@ -250,21 +242,9 @@ class StateMachineNode(Node):
         initial_pose.pose.orientation.w = math.cos(float(kwargs.get('initial_theta', 0)) / 2.0)
         self.navigator.setInitialPose(initial_pose)
 
-    # def _load_map(self, **kwargs):
-    #     map_name = kwargs.get('map_name', '')
-    #     if map_name == 'map_0':
-    #         self.navigator.changeMap(self.map_0_url)
-    #     elif map_name == 'map_1':
-    #         self.navigator.changeMap(self.map_1_url)
-    #     else:
-    #         self.get_logger().error(f"Map name '{map_name}' not found in parameters.")
-
-    # def map_response_callback(self, future):
-    #     try:
-    #         response = future.result()
-    #         self.get_logger().info(f"Map loaded successfully: {response}")
-    #     except Exception as e:
-    #         self.get_logger().error(f"Service call failed: {e}")
+    def _clear_costmaps(self):
+        self.navigator.clearGlobalCostmap()
+        self.navigator.clearLocalCostmap()
 
 def main(args=None):
     rclpy.init(args=args)

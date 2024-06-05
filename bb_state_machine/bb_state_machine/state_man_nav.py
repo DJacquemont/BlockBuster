@@ -48,6 +48,8 @@ class ManNav(BaseState):
                 self.command_storage(value1)
             elif command_type == 'w':
                 self.execute_wait(float(value1))
+            elif command_type == 'c':
+                self.execute_costmap_clear()
 
             if self.goal_reached:
                 if self.command_index < len(self.commands) - 1:
@@ -85,3 +87,6 @@ class ManNav(BaseState):
             self.wait_start_time = None
             self.wait_duration = None
             self.logger.info("Wait completed")
+
+    def execute_costmap_clear(self):
+        self.action_interface('clear_costmap')
