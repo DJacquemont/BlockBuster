@@ -33,8 +33,8 @@ class StateMachineNode(Node):
         self.alpha = 0.5
         self.display_marker = False
 
-        self.zone_3 = [4.5,0.5,7.5, 2.5]
-        self.zone_4 = [4.5,-6.5,7.5, 7.5]
+        self.zone_3 = [4.5,0.5,7.5,-2.5]
+        self.zone_4 = [4.5,-5.5,7.5,-7.5]
 
         self._declare_parameters()
         self._init_shared_data()

@@ -113,9 +113,11 @@ class BaseState(ABC):
 
                     elif data_type == 'commands':
                         if len(line) == 2:
-                            target_list.append((line[0], line[1], None))
+                            target_list.append((line[0], line[1], None, None))
                         elif len(line) == 3:
-                            target_list.append((line[0], line[1], line[2]))
+                            target_list.append((line[0], line[1], line[2], None))
+                        elif len(line) == 4:
+                            target_list.append((line[0], line[1], line[2], line[3]))
                         else:
                             self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
 
