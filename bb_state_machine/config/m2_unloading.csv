@@ -1,0 +1,7 @@
+#command,distance/angle,velocity/angularspeed
+r,0.0,0.4
+t,-0.60,0.2
+s,o
+w,4
+t,0.50,0.1
+s,c

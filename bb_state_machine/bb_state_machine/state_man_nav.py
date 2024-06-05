@@ -15,7 +15,7 @@ class ManNav(BaseState):
         self.wait_duration = None
 
     def enter(self):
-        self.logger.info("Entering state: MAN_NAV")
+        self.logger.info(f"Entering state: {self.name}")
         self.status = "RUNNING"
         self.commands = self.load_data(self.command_file,  "commands")
         self.logger.info(f"Commands man {self.commands}")

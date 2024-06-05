@@ -17,8 +17,8 @@ class BaseState(ABC):
         self.status = "IDLE"
         self.distance_tolerance = 0.05
         self.angle_tolerance = 0.07
-        self.min_angular_speed = 0.2
-        self.min_linear_speed = 0.15
+        self.min_angular_speed = 0.1
+        self.min_linear_speed = 0.1
         pass
 
     @abstractmethod
@@ -75,7 +75,7 @@ class BaseState(ABC):
             angle -= 2 * np.pi
         return angle
 
-    def execute_translation(self, distance, max_linear_speed, use_odom=False):
+    def execute_translation(self, distance, max_linear_speed, angular_speed_z = 0.0, use_odom=False):
 
         if use_odom:
             current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.odom_x) ** 2 + (self.start_pose[1] - self.shared_data.odom_y) ** 2)
@@ -88,7 +88,7 @@ class BaseState(ABC):
         target_x_speed = 0 if current_distance_to_goal <= self.distance_tolerance else np.sign(distance) * linear_speed
         self.goal_reached = current_distance_to_goal <= self.distance_tolerance
             
-        self.action_interface('publish_cmd_vel', linear_x=target_x_speed)
+        self.action_interface('publish_cmd_vel', linear_x=target_x_speed, angular_z = angular_speed_z)
 
     def load_data(self, file_path, data_type):
         try:

@@ -12,7 +12,7 @@ class FrontClearing(BaseState):
         self.start_pose = None
 
     def enter(self):
-        self.logger.info("Entering state: FRONT_CLEARING")
+        self.logger.info(f"Entering state: {self.name}")
         self.status = "RUNNING"
         self.command_index = 0
         self.goal_reached = False

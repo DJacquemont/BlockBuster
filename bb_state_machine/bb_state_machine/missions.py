@@ -18,8 +18,6 @@ class Mission1(SuperState):
     def determine_next_state(self):
         current_ss_name = self.current_substate.name
         current_ss_status = self.current_substate.status
-
-        self.logger.info(f"Current substate: {current_ss_name}, status: {current_ss_status}")
         
         if current_ss_name == "GOTO_Z3" and current_ss_status == "COMPLETED":
             if self.shared_data.button_pressed:
@@ -51,27 +49,79 @@ class Mission1(SuperState):
 class Mission2(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
         super().__init__(name, shared_data, action_interface, logger)
-        self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger, filename="/m2_nav_t_0.csv"))
-        self.add_substate("AUTO_NAV_A", AutoNavA("AUTO_NAV_A", self.shared_data, action_interface, logger, filename="/m2_nav_a_0.csv"))
-        self.add_substate("SLOPE_UP", SlopeClimbing("SLOPE_UP", self.shared_data, action_interface, logger, angle_limit=1.3, direction_up=True))
-        self.add_substate("SLOPE_DOWN", SlopeClimbing("SLOPE_DOWN", self.shared_data, action_interface, logger, angle_limit=1.3, direction_up=False, switch_map='l1'))
-        # self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/test_man_nav.csv"))
-        self.default_substate = "AUTO_NAV_A"
+        self.add_substate("SEARCH_Z4", AutoNavT("SEARCH_Z4", self.shared_data, action_interface, logger, filename="/m2_search_z4.csv"))
+        self.add_substate("GOTO_Z4", AutoNavA("GOTO_Z4", self.shared_data, action_interface, logger, filename="/m2_goto_z4.csv"))
+        self.add_substate("SLOPE_UP_1", SlopeClimbing("SLOPE_UP_1", self.shared_data, action_interface, logger, angle_limit=1.51, angular_speed_z = 0.05, direction_up=True))
+        self.add_substate("SLOPE_UP_2", SlopeClimbing("SLOPE_UP_2", self.shared_data, action_interface, logger, angle_limit=1.51, angular_speed_z = 0.05, direction_up=False))
+        self.add_substate("APPROACH_SLOPE_LOW", ManNav("APPROACH_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/m2_approach_slope_low.csv"))
+        self.add_substate("LEAVE_SLOPE_HIGH", ManNav("LEAVE_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/m2_leave_slope_high.csv"))
+        self.add_substate("GOTO_SLOPE_HIGH", AutoNavA("GOTO_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/m2_goto_slope_high.csv"))
+        self.add_substate("APPROACH_SLOPE_HIGH", ManNav("APPROACH_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/m2_approach_slope_high.csv"))
+        self.add_substate("SLOPE_DOWN_1", SlopeClimbing("SLOPE_DOWN_1", self.shared_data, action_interface, logger, angle_limit=1.15, angular_speed_z = -0.1, direction_up=False))
+        self.add_substate("SLOPE_DOWN_2", SlopeClimbing("SLOPE_DOWN_2", self.shared_data, action_interface, logger, angle_limit=1.15, angular_speed_z = -0.1, direction_up=True))
+        self.add_substate("LEAVE_SLOPE_LOW", ManNav("LEAVE_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/m2_leave_slope_low.csv"))
+        self.add_substate("HOMING", AutoNavA("HOMING", self.shared_data, action_interface, logger, filename="/m2_homing.csv"))
+        self.add_substate("UNLOADING", ManNav("UNLOADING", self.shared_data, action_interface, logger, filename="/m2_unloading.csv"))
+        self.default_substate = "GOTO_Z4"
+
+        self.mission_2_completed = False
 
     def determine_next_state(self):
-        current_ss = self.current_substate.name
-        
-        if current_ss == "AUTO_NAV_A":
-            return "SLOPE_UP"
+        current_ss_name = self.current_substate.name
+        current_ss_status = self.current_substate.status
 
-        elif current_ss == "SLOPE_UP":
-            return "SLOPE_DOWN"
+        if current_ss_name == "GOTO_Z4" and current_ss_status == "COMPLETED":
+                return "APPROACH_SLOPE_LOW"
         
-        elif current_ss == "SLOPE_DOWN":
-            return "AUTO_NAV_T"
+        if current_ss_name == "APPROACH_SLOPE_LOW" and current_ss_status == "COMPLETED":
+                return "SLOPE_UP_1"
+        
+        if current_ss_name == "SLOPE_UP_1" and current_ss_status == "COMPLETED":
+                return "SLOPE_UP_2"
+        
+        if current_ss_name == "SLOPE_UP_2" and current_ss_status == "COMPLETED":
+                return "LEAVE_SLOPE_HIGH"
+        
+        # if current_ss_name == "APPROACH_SLOPE_LOW" and current_ss_status == "COMPLETED":
+        #         return "SLOPE_DOWN"
+        
+        # if current_ss_name == "SLOPE_UP" and current_ss_status == "COMPLETED":
+        #         return "LEAVE_SLOPE_HIGH"
+        
+        # if current_ss_name == "SLOPE_DOWN" and current_ss_status == "COMPLETED":
+        #         return "SLOPE_UP"
+        
+        if current_ss_name == "LEAVE_SLOPE_HIGH" and current_ss_status == "COMPLETED":
+                return "SEARCH_Z4"
+        
+        elif current_ss_name == "SEARCH_Z4" and current_ss_status == "STORAGE_FULL":
+            return "GOTO_SLOPE_HIGH"
+        
+        elif current_ss_name == "GOTO_SLOPE_HIGH" and current_ss_status == "COMPLETED":
+            return "APPROACH_SLOPE_HIGH"
+        
+        elif current_ss_name == "APPROACH_SLOPE_HIGH" and current_ss_status == "COMPLETED":
+            return "SLOPE_DOWN_1"
+        
+        elif current_ss_name == "SLOPE_DOWN_1" and current_ss_status == "COMPLETED":
+            return "SLOPE_DOWN_2"
 
-        elif current_ss == "AUTO_NAV_T":
+        elif current_ss_name == "SLOPE_DOWN_2" and current_ss_status == "COMPLETED":
+            return "LEAVE_SLOPE_LOW"
+        
+        elif current_ss_name == "LEAVE_SLOPE_LOW" and current_ss_status == "COMPLETED":
+            return "HOMING"
+        
+        elif current_ss_name == "UNLOADING" and current_ss_status == "COMPLETED":
+            if self.shared_data.duplo_left_z4 <= 0 or self.mission_2_completed:
                 self.status = "COMPLETED"
+                return None
+            else:
+                return "GOTO_Z4"
+        
+        elif current_ss_name == "SEARCH_Z4" and current_ss_status == "COMPLETED":
+            self.mission_2_completed = True
+            return "GOTO_SLOPE_HIGH"
     
 class Mission3(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):

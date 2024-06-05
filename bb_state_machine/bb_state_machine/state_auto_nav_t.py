@@ -29,7 +29,7 @@ class AutoNavT(BaseState):
         self.rotation_target = None
 
     def enter(self):
-        self.logger.info("Entering state: AUTO_NAV_T")
+        self.logger.info(f"Entering state: {self.name}")
         self.status = "RUNNING"
         commands = self.load_data(self.command_file, "waypoints_t")
         self.waypoints = [command[:2] for command in commands]
@@ -49,7 +49,7 @@ class AutoNavT(BaseState):
         self.reset_navigation_state()
 
     def execute(self):
-        if self.shared_data.duplos_stored > self.shared_data.max_duplos_stored or \
+        if self.shared_data.duplos_stored >= self.shared_data.max_duplos_stored or \
             self.shared_data.duplo_left_z3 <= 0:
             self.status = "STORAGE_FULL"
 
