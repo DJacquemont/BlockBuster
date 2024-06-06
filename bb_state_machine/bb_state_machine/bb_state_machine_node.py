@@ -1,11 +1,11 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from bb_state_machine.missions import Mission1, Mission2, Mission3
 from bb_state_machine.shared_data import SharedData
 from bb_state_machine.robot_state_machine import RobotStateMachine
-from bb_state_machine.utils import quaternion_to_euler
+from bb_state_machine.utils import quaternion_to_euler, is_point_in_zone
 from geometry_msgs.msg import Twist, PointStamped, PoseStamped, WrenchStamped
 from std_msgs.msg import Empty, Float64MultiArray
 from nav_msgs.msg import Odometry
@@ -22,28 +22,37 @@ import tf2_geometry_msgs
 import numpy as np
 import math
 
-
 class StateMachineNode(Node):
     def __init__(self):
         super().__init__('state_machine_node')
+
+        self.get_logger().info('Blockbuster State Machine node successfully started')
+
+        self.distance_threshold = 0.4
+        self.alpha = 0.7
+        self.display_marker = False
+
         self._declare_parameters()
         self._init_shared_data()
+
+        # Create callback groups
+        self._priority_callback_group = MutuallyExclusiveCallbackGroup()
+        self._default_callback_group = ReentrantCallbackGroup()
+        self._costmap_callback_group = MutuallyExclusiveCallbackGroup()
+
         self._init_publishers_and_subscribers()
         self._init_timers()
         self._init_tf_listener()
         self._init_navigator()
         self._init_state_machine()
-        self._init_map_service()
 
-        self.distance_threshold = 1.0
-        self.alpha = 0.5
-        self.display_marker = True
-        self.get_logger().info(f'Blockbuster State Machine node started with data path: {self.shared_data.data_path}')
+        self.get_logger().info('Done initializing !!')
+
+    def destroyNode(self):
+        super().destroy_node()
 
     def _declare_parameters(self):
         self.declare_parameter('data_path', '/src/bb_state_machine/config')
-        self.declare_parameter('map_1', '')
-        self.declare_parameter('map_2', '')
 
     def _init_shared_data(self):
         self.shared_data = SharedData()
@@ -52,23 +61,28 @@ class StateMachineNode(Node):
     def _init_publishers_and_subscribers(self):
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel_mn', 10)
         self.servo_pub = self.create_publisher(Float64MultiArray, '/storage_servo/commands', 10)
-        self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1)
-        self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1)
-        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 1)
-        self.callback_group = MutuallyExclusiveCallbackGroup()
-        self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1, callback_group=self.callback_group)
-        self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
+
+        self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1, callback_group=self._default_callback_group)
+        self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1, callback_group=self._default_callback_group)
+        self.odom_sub = self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 1, callback_group=self._default_callback_group)
+
+        self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 10, callback_group=self._priority_callback_group)
+
+        if self.display_marker:
+            self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
 
     def _init_timers(self):
-        self.timer_tf = self.create_timer(0.05, self.timer_tf_callback)
-        self.timer_sm_delay = self.create_timer(5.0, self.start_timer_sm)
+        self.timer_sm_delay = self.create_timer(3.0, self.timer_start_sm, callback_group=self._default_callback_group)
+        self.timer_costmap = self.create_timer(3.0, self.timer_get_costmap, callback_group=self._costmap_callback_group)
 
     def _init_tf_listener(self):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        
+        self.timer_tf = self.create_timer(0.2, self.timer_tf_callback, callback_group=self._default_callback_group)
+
     def _init_navigator(self):
         self.navigator = BasicNavigator()
+        # self.navigator.get_logger().set_level(rclpy.logging.LoggingSeverity.FATAL)
         self.navigator.waitUntilNav2Active()
 
     def _init_state_machine(self):
@@ -78,13 +92,6 @@ class StateMachineNode(Node):
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.set_mission("MISSION_1")
 
-    def _init_map_service(self):
-        self.map_1_url = self.get_parameter('map_1').get_parameter_value().string_value
-        self.map_2_url = self.get_parameter('map_2').get_parameter_value().string_value
-        self.map_service_client = self.create_client(LoadMap, '/map_server/load_map')
-        while not self.map_service_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /map_server/load_map not available, waiting again...')
-
     def timer_tf_callback(self):
         try:
             trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time())
@@ -92,13 +99,24 @@ class StateMachineNode(Node):
             self.shared_data.update_position(trans.transform.translation.x, trans.transform.translation.y, yaw)
         except TransformException as ex:
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
-        
-    def start_timer_sm(self):
-        self.timer_sm = self.create_timer(0.05, self.timer_sm_callback)
-        self.timer_sm_delay.cancel()
-        self.timer_sm_delay = None 
 
-    def timer_sm_callback(self):        
+        if is_point_in_zone([self.shared_data.x, self.shared_data.y], self.shared_data.zone_3):
+            self.shared_data.update_current_zone("ZONE_3")
+        elif is_point_in_zone([self.shared_data.x, self.shared_data.y], self.shared_data.zone_4):
+            self.shared_data.update_current_zone("ZONE_4")
+        else:
+            self.shared_data.update_current_zone("ZONE_1")
+
+    def timer_start_sm(self):
+        self.timer_sm = self.create_timer(0.2, self.timer_sm_callback, callback_group=self._default_callback_group)
+        self.timer_sm_delay.cancel()
+        self.timer_sm_delay = None
+
+    def timer_get_costmap(self):
+        costmap = self.navigator.getGlobalCostmap()
+        self.shared_data.update_costmap(costmap)
+
+    def timer_sm_callback(self):
         self.state_machine.execute()
 
     def imu_callback(self, msg):
@@ -115,15 +133,19 @@ class StateMachineNode(Node):
 
     def yolov6_callback(self, msg):
         detection_dict = self.shared_data.detection_dict
-        for i, detection in enumerate(msg.detections):
+        for detection in msg.detections:
             try:
                 point_in_camera_frame = PointStamped()
                 point_in_camera_frame.header.frame_id = "oak_rgb_camera_optical_frame"
+                point_in_camera_frame.header.stamp = msg.header.stamp
                 point_in_camera_frame.point.x = detection.position.x
                 point_in_camera_frame.point.y = detection.position.y
                 point_in_camera_frame.point.z = detection.position.z
                 point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=0.5))
-                
+
+                if point_in_base_frame.point.z < -0.10 or point_in_base_frame.point.z > 0.20:
+                    continue
+
                 object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y)
 
                 already_stored = False
@@ -134,10 +156,14 @@ class StateMachineNode(Node):
                         ema_position = [(self.alpha * object_position[j] + (1 - self.alpha) * stored_position[j]) for j in range(2)]
                         detection_dict[object_id] = tuple(ema_position)
                         break
-                
+
                 if not already_stored:
+                    if not self.shared_data.is_circle_free(object_position[0], object_position[1], 0):
+                        
+                        continue
+
                     detection_dict[self.get_new_detection_id(detection_dict)] = object_position
-            
+
                 self.shared_data.update_detection_dict(detection_dict)
             except TransformException as ex:
                 self.get_logger().info(f'Could not transform oak_rgb_camera_optical_frame to base_link: {ex}')
@@ -165,24 +191,22 @@ class StateMachineNode(Node):
                 marker.color.b = 0.0
                 marker.id = object_id
                 marker_array.markers.append(marker)
-            
+
             self.marker_pub.publish(marker_array)
 
     def get_new_detection_id(self, detection_dict):
         all_ids = list(detection_dict.keys())
         max_id = max(all_ids) if all_ids else -1
         return max_id + 1
-    
+
     def perform_action(self, action_type, **kwargs):
         action_handlers = {
             'publish_cmd_vel': self._publish_cmd_vel,
             'publish_servo_cmd': self._publish_servo_cmd,
             'navigate_to_pose': self._navigate_to_pose,
-            'is_nav_complete': self.navigator.isTaskComplete,
             'abort_navigation': self.navigator.cancelTask,
             'set_initial_pose': self._set_initial_pose,
-            'log_info': lambda: self.get_logger().info(kwargs.get('message', '')),
-            'load_map': self._load_map,
+            'clear_costmap': self._clear_costmaps,
         }
 
         if action_type in action_handlers:
@@ -198,6 +222,8 @@ class StateMachineNode(Node):
 
     def _publish_servo_cmd(self, **kwargs):
         servo_command = kwargs.get('servo_command', [0.0])
+        if servo_command[0] == 2.0:
+            self.shared_data.reset_duplos_stored()
         msg = Float64MultiArray()
         msg.data = servo_command
         self.servo_pub.publish(msg)
@@ -222,34 +248,15 @@ class StateMachineNode(Node):
         initial_pose.pose.orientation.w = math.cos(float(kwargs.get('initial_theta', 0)) / 2.0)
         self.navigator.setInitialPose(initial_pose)
 
-    def _load_map(self, **kwargs):
-        map_name = kwargs.get('map_name', '')
-        if map_name == 'map_1':
-            self.load_map(self.map_1_url)
-        elif map_name == 'map_2':
-            self.load_map(self.map_2_url)
-        else:
-            self.get_logger().error(f"Map name '{map_name}' not found in parameters.")
-
-    def load_map(self, map_url):
-        request = LoadMap.Request()
-        request.map_url = map_url
-        future = self.map_service_client.call_async(request)
-        future.add_done_callback(self.map_response_callback)
-
-    def map_response_callback(self, future):
-        try:
-            response = future.result()
-            self.get_logger().info(f"Map loaded successfully: {response}")
-        except Exception as e:
-            self.get_logger().error(f"Service call failed: {e}")
+    def _clear_costmaps(self):
+        self.navigator.clearGlobalCostmap()
+        self.navigator.clearLocalCostmap()
 
 def main(args=None):
     rclpy.init(args=args)
     state_machine_node = StateMachineNode()
 
     executor = MultiThreadedExecutor()
-
     executor.add_node(state_machine_node)
 
     try:

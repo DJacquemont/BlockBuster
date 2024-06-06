@@ -1,5 +1,4 @@
 from bb_state_machine.base_state import BaseState
-import csv
 import math
 import numpy as np
 from typing import List, Tuple, Optional
@@ -9,23 +8,34 @@ class AutoNavA(BaseState):
         super().__init__(name, shared_data, action_interface, logger)
         self.command_file = shared_data.data_path + filename
         self.waypoints = []
+        self.distance_threshold_wp = []
         self.current_waypoint = None
         self.waypoint_index = 0
         self.goal_reached = True
         self.manually_navigating = False
         self.goal_approach_status = None
         self.target_theta_speed = 0.4
-        self.target_x_speed = 0.3
+        self.target_x_speed = 0.15
         self.start_pose = None
 
     def enter(self):
-        self.logger.info("Entering state: AUTO_NAV_A")
+        self.logger.info(f"Entering state: {self.name}")
         self.status = "RUNNING"
-        self.waypoints = self.load_data(self.command_file, "waypoints_a")
-        self.waypoint_index = 0
+        commands = self.load_data(self.command_file, "waypoints_a")
+        self.waypoints = [command[:3] for command in commands]
+        self.distance_threshold_wp = [command[3] for command in commands]
+
+        self.logger.info(f'commands : {commands}')
+        self.logger.info(f'self.waypoints : {self.waypoints}')
+        self.logger.info(f'self.distance_threshold_wp : {self.distance_threshold_wp}')
+
         if self.waypoints:
             self.set_current_waypoint()
             self.initiate_navigation()
+        else:
+            self.logger.error("No valid waypoints found in file: {}".format(self.command_file))
+            self.status = "COMPLETED"
+            self.reset_navigation_state()
 
     def exit(self):
         self.reset_navigation_state()
@@ -47,6 +57,7 @@ class AutoNavA(BaseState):
 
     def reset_navigation_state(self):
         self.waypoints = []
+        self.distance_threshold_wp = []
         self.current_waypoint = None
         self.waypoint_index = 0
         self.goal_reached = True
@@ -69,10 +80,10 @@ class AutoNavA(BaseState):
                          (self.shared_data.y - self.current_waypoint[1]) ** 2)
 
     def is_reached(self, distance: float) -> bool:
-        return distance < 0.4 and self.waypoint_index < len(self.waypoints) - 1
+        return distance < self.distance_threshold_wp[self.waypoint_index] and self.waypoint_index < len(self.waypoints) - 1
 
     def is_last_waypoint(self, distance: float) -> bool:
-        return distance < 0.25 and self.waypoint_index == len(self.waypoints) - 1
+        return distance < self.distance_threshold_wp[self.waypoint_index] and self.waypoint_index == len(self.waypoints) - 1
 
     def advance_waypoint(self):
         self.goal_reached = True
@@ -91,7 +102,7 @@ class AutoNavA(BaseState):
             self.execute_rotation(self.alpha_rotation, self.target_theta_speed)
             self.transition_to_translation()
         elif self.goal_approach_status == "MAN_TRANS":
-            self.execute_translation(0.25, self.target_x_speed)
+            self.execute_translation(self.distance_threshold_wp[self.waypoint_index], self.target_x_speed)
             self.transition_to_final_rotation()
         elif self.goal_approach_status == "MAN_ROT_2":
             self.execute_rotation(self.current_waypoint[2], self.target_theta_speed)

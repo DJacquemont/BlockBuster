@@ -40,9 +40,10 @@ WORKDIR /root/serial
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash; make" && \
     make install
 
-# Optimizing the .bashrc entries
+# .bashrc entries
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
-    echo 'cd() { builtin cd "$@" && ls; }' >> /root/.bashrc
+    echo 'cd() { builtin cd "$@" && ls; }' >> /root/.bashrc && \
+    echo "export ROS_LOCALHOST_ONLY=1" >> /root/.bashrc
 
 COPY robot_start.sh /root
 RUN chmod +x /root/robot_start.sh

@@ -17,8 +17,8 @@ class BaseState(ABC):
         self.status = "IDLE"
         self.distance_tolerance = 0.05
         self.angle_tolerance = 0.07
-        self.min_angular_speed = 0.2
-        self.min_linear_speed = 0.15
+        self.min_angular_speed = 0.1
+        self.min_linear_speed = 0.1
         pass
 
     @abstractmethod
@@ -75,8 +75,12 @@ class BaseState(ABC):
             angle -= 2 * np.pi
         return angle
 
-    def execute_translation(self, distance, max_linear_speed):
-        current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.x) ** 2 + (self.start_pose[1] - self.shared_data.y) ** 2)
+    def execute_translation(self, distance, max_linear_speed, angular_speed_z = 0.0, use_odom=False):
+
+        if use_odom:
+            current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.odom_x) ** 2 + (self.start_pose[1] - self.shared_data.odom_y) ** 2)
+        else:
+            current_distance_to_goal = np.abs(distance) - np.sqrt((self.start_pose[0] - self.shared_data.x) ** 2 + (self.start_pose[1] - self.shared_data.y) ** 2)
 
         linear_speed = np.exp(np.abs(current_distance_to_goal)*2-1) * np.abs(max_linear_speed)
         linear_speed = max(min(linear_speed, max_linear_speed), self.min_linear_speed)
@@ -84,7 +88,7 @@ class BaseState(ABC):
         target_x_speed = 0 if current_distance_to_goal <= self.distance_tolerance else np.sign(distance) * linear_speed
         self.goal_reached = current_distance_to_goal <= self.distance_tolerance
             
-        self.action_interface('publish_cmd_vel', linear_x=target_x_speed)
+        self.action_interface('publish_cmd_vel', linear_x=target_x_speed, angular_z = angular_speed_z)
 
     def load_data(self, file_path, data_type):
         try:
@@ -92,11 +96,16 @@ class BaseState(ABC):
                 reader = csv.reader(file)
                 target_list = []
                 for line in reader:
+                    if line[0].startswith('#'):
+                        continue
+                    
                     if data_type == 'waypoints_t':
-                        if len(line) == 2:
+                        if len(line) == 4:
                             try:
-                                waypoint = (float(line[0]), float(line[1]))
-                                target_list.append(waypoint)
+                                # if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
+                                #     continue
+
+                                target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3])))
                             except ValueError:
                                 self.logger.error(f"Invalid number format in line: {line}")
                         else:
@@ -104,17 +113,21 @@ class BaseState(ABC):
 
                     elif data_type == 'commands':
                         if len(line) == 2:
-                            target_list.append((line[0], line[1], None))
+                            target_list.append((line[0], line[1], None, None))
                         elif len(line) == 3:
-                            target_list.append((line[0], line[1], line[2]))
+                            target_list.append((line[0], line[1], line[2], None))
+                        elif len(line) == 4:
+                            target_list.append((line[0], line[1], line[2], line[3]))
                         else:
                             self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
 
                     elif data_type == 'waypoints_a':
-                        if len(line) == 3:
+                        if len(line) == 4:
                             try:
-                                waypoint = (float(line[0]), float(line[1]), float(line[2]))
-                                target_list.append(waypoint)
+                                # if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
+                                #     continue
+
+                                target_list.append((float(line[0]), float(line[1]), float(line[2]), float(line[3])))
                             except ValueError:
                                 self.logger.error(f"Invalid number format in line: {line}")
                         else:
