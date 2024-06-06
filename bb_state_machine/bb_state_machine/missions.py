@@ -77,19 +77,19 @@ class Mission2(SuperState):
         current_ss_status = self.current_substate.status
 
         if current_ss_name == "GOTO_Z4" and current_ss_status == "COMPLETED":
-                return "APPROACH_SLOPE_LOW"
+            return "APPROACH_SLOPE_LOW"
         
         elif current_ss_name == "APPROACH_SLOPE_LOW" and current_ss_status == "COMPLETED":
-                return "SLOPE_UP_1"
+            return "SLOPE_UP_1"
         
         elif current_ss_name == "SLOPE_UP_1" and current_ss_status == "COMPLETED":
-                return "SLOPE_UP_2"
+            return "SLOPE_UP_2"
         
         elif current_ss_name == "SLOPE_UP_2" and current_ss_status == "COMPLETED":
-                return "LEAVE_SLOPE_HIGH"
+            return "LEAVE_SLOPE_HIGH"
         
         elif current_ss_name == "LEAVE_SLOPE_HIGH" and current_ss_status == "COMPLETED":
-                return "SEARCH_Z4"
+            return "SEARCH_Z4"
         
         elif current_ss_name == "SEARCH_Z4" and current_ss_status == "STORAGE_FULL":
             return "GOTO_SLOPE_HIGH"
@@ -122,31 +122,3 @@ class Mission2(SuperState):
         elif current_ss_name == "SEARCH_Z4" and current_ss_status == "COMPLETED":
             self.mission_2_completed = True
             return "GOTO_SLOPE_HIGH"
-    
-class Mission3(SuperState):
-    def __init__(self, name, shared_data, action_interface, logger):
-        super().__init__(name, shared_data, action_interface, logger)
-        self.add_substate("AUTO_NAV_T", AutoNavT("AUTO_NAV_T", self.shared_data, action_interface, logger, filename="/test_auto_nav_t.csv"))
-        self.add_substate("AUTO_NAV_A_1", AutoNavA("AUTO_NAV_A_1", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))
-        self.add_substate("AUTO_NAV_A_2", AutoNavA("AUTO_NAV_A_2", self.shared_data, action_interface, logger, filename="/test_auto_nav_a.csv"))
-        self.add_substate("MAN_NAV", ManNav("MAN_NAV", self.shared_data, action_interface, logger, filename="/test_man_nav.csv"))
-        self.default_substate = "AUTO_NAV_A_1"
-
-    def determine_next_state(self):
-        current_ss = self.current_substate.name
-        
-        if current_ss == "AUTO_NAV_T":
-            return "AUTO_NAV_A_1"
-
-        elif current_ss == "AUTO_NAV_A_1":
-            return "MAN_NAV"  # Proceed to MAN_NAV after AUTO_NAV_A
-
-        elif current_ss == "MAN_NAV":
-            if False:
-                return "AUTO_NAV_A_2"
-            else:
-                self.status = "COMPLETED"
-                return None
-        
-        elif current_ss == "AUTO_NAV_A_2":
-                return "AUTO_NAV_T"

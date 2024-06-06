@@ -4,14 +4,16 @@ import numpy as np
 from bb_state_machine.utils import is_point_in_zone
 
 class AutoNavT(BaseState):
-    def __init__(self, name, shared_data, action_interface, logger, filename, zone = 'ZONE_3'):
+    def __init__(self, name, shared_data, action_interface, logger, filename, zone = ''):
         super().__init__(name, shared_data, action_interface, logger)
         self.action_interface = action_interface
         self.command_file = shared_data.data_path + filename
         self.target_theta_speed = 0.3
         self.target_x_speed = 0.3
         self.zone = zone
+        assert zone!=''
         self.reset_navigation_state()
+                
 
     def reset_navigation_state(self):
         self.waypoints = []
@@ -52,8 +54,9 @@ class AutoNavT(BaseState):
         self.reset_navigation_state()
 
     def execute(self):
-        if self.shared_data.duplos_stored >= self.shared_data.max_duplos_stored or \
-           self.shared_data.duplo_left_z3 <= 0:
+        if (self.shared_data.current_zone == 'ZONE_3' and self.shared_data.duplo_left_z3 <= 0) or \
+            (self.shared_data.current_zone == 'ZONE_4' and self.shared_data.duplo_left_z4 <= 0) or \
+            (self.shared_data.duplos_stored >= self.shared_data.max_duplos_stored):
             self.logger.info("Storage full or no duplos left")
             self.status = "STORAGE_FULL"
             return
@@ -68,8 +71,8 @@ class AutoNavT(BaseState):
         #     self.executing_rotation_between_angles(angle_min, angle_max)
 
     def searching_duplo(self):
-        # self.logger.info(f'Detection {self.shared_data.detection_dict}')
-        # self.logger.info(f'Waypoints {self.waypoints}')
+        self.logger.info(f'Detection {self.shared_data.detection_dict}')
+        self.logger.info(f'Waypoints {self.waypoints}')
         dist_closest_duplo, i_closest_duplo = self.find_closest_target_dict(self.shared_data.detection_dict)
         dist_closest_waypoint, i_closest_waypoint = self.find_closest_target_list(self.waypoints)
 
@@ -135,11 +138,11 @@ class AutoNavT(BaseState):
             if tracking == "WP":
                 self.tracking_id = i_closest_waypoint
                 target_x, target_y = self.waypoints[self.tracking_id]
-                # self.logger.info(f"Tracking waypoint: {target_x}, {target_y}")
+                self.logger.info(f"Tracking waypoint: {target_x}, {target_y}")
             else:
                 self.tracking_id = i_closest_duplo
                 target_x, target_y = self.shared_data.detection_dict[self.tracking_id]
-                # self.logger.info(f"Tracking duplo: {target_x}, {target_y}")
+                self.logger.info(f"Tracking duplo: {target_x}, {target_y}")
             self.action_interface('navigate_to_pose', goal_x=target_x, goal_y=target_y, goal_theta=0)
         else:
             self.logger.info("No waypoints or duplos to track")

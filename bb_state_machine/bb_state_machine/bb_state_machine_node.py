@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
-from bb_state_machine.missions import Mission1, Mission2, Mission3
+from bb_state_machine.missions import Mission1, Mission2
 from bb_state_machine.shared_data import SharedData
 from bb_state_machine.robot_state_machine import RobotStateMachine
 from bb_state_machine.utils import quaternion_to_euler, is_point_in_zone
@@ -89,7 +89,6 @@ class StateMachineNode(Node):
         self.state_machine = RobotStateMachine(self.get_logger())
         self.state_machine.add_mission("MISSION_1", Mission1("MISSION_1", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_2", Mission2("MISSION_2", self.shared_data, self.perform_action, self.get_logger()))
-        self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.set_mission("MISSION_1")
 
     def timer_tf_callback(self):
