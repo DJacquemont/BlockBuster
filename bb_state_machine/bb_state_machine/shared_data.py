@@ -29,6 +29,8 @@ class SharedData:
         self._duplos_left_z1 = 15
 
         self._current_zone = None
+        self._zone_3 = [4.5, -2.5, 7.5, 0.5]
+        self._zone_4 = [4.5, -7.5, 7.5, -5.5]
 
         self._button_pressed = False
 
@@ -103,6 +105,14 @@ class SharedData:
         return self._current_zone
     
     @property
+    def zone_3(self):
+        return self._zone_3
+    
+    @property
+    def zone_4(self):
+        return self._zone_4
+    
+    @property
     def button_pressed(self):
         return self._button_pressed
     
@@ -175,6 +185,6 @@ class SharedData:
                     check_y = map_y + j
                     if check_x < 0 or check_x >= width or check_y < 0 or check_y >= height:
                         return False
-                    if data[check_y, check_x] != 0:
+                    if data[check_y, check_x] > 50:
                         return False
         return True

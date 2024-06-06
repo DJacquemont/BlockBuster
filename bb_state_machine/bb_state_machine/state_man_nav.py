@@ -79,14 +79,12 @@ class ManNav(BaseState):
         if self.wait_start_time is None:
             self.wait_start_time = time.time()
             self.wait_duration = wait_time
-            self.logger.info(f"Starting wait for {wait_time} seconds")
 
         elapsed_time = time.time() - self.wait_start_time
         if elapsed_time >= self.wait_duration:
             self.goal_reached = True
             self.wait_start_time = None
             self.wait_duration = None
-            self.logger.info("Wait completed")
 
     def execute_costmap_clear(self):
         self.action_interface('clear_costmap')

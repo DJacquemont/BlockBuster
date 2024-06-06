@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
 from bb_state_machine.missions import Mission1, Mission2, Mission3
 from bb_state_machine.shared_data import SharedData
 from bb_state_machine.robot_state_machine import RobotStateMachine
@@ -22,22 +22,24 @@ import tf2_geometry_msgs
 import numpy as np
 import math
 
-
 class StateMachineNode(Node):
     def __init__(self):
         super().__init__('state_machine_node')
 
-        self.get_logger().info('Blockbuster State Machine node sucessfully started')
+        self.get_logger().info('Blockbuster State Machine node successfully started')
 
         self.distance_threshold = 0.4
-        self.alpha = 0.5
+        self.alpha = 0.7
         self.display_marker = False
-
-        self.zone_3 = [4.5,0.5,7.5,-2.5]
-        self.zone_4 = [4.5,-5.5,7.5,-7.5]
 
         self._declare_parameters()
         self._init_shared_data()
+
+        # Create callback groups
+        self._priority_callback_group = MutuallyExclusiveCallbackGroup()
+        self._default_callback_group = ReentrantCallbackGroup()
+        self._costmap_callback_group = MutuallyExclusiveCallbackGroup()
+
         self._init_publishers_and_subscribers()
         self._init_timers()
         self._init_tf_listener()
@@ -45,7 +47,6 @@ class StateMachineNode(Node):
         self._init_state_machine()
 
         self.get_logger().info('Done initializing !!')
-
 
     def destroyNode(self):
         super().destroy_node()
@@ -60,25 +61,28 @@ class StateMachineNode(Node):
     def _init_publishers_and_subscribers(self):
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel_mn', 10)
         self.servo_pub = self.create_publisher(Float64MultiArray, '/storage_servo/commands', 10)
-        self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1)
-        self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1)
-        self.odom_sub = self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 1)
-        self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 1)
+
+        self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1, callback_group=self._default_callback_group)
+        self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1, callback_group=self._default_callback_group)
+        self.odom_sub = self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 1, callback_group=self._default_callback_group)
+
+        self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 10, callback_group=self._priority_callback_group)
+
         if self.display_marker:
             self.marker_pub = self.create_publisher(MarkerArray, 'visualization_marker', 10)
 
     def _init_timers(self):
-        self.timer_tf = self.create_timer(0.2, self.timer_tf_callback)
-        self.timer_sm_delay = self.create_timer(3.0, self.timer_start_sm)
-        self.timer_costmap = self.create_timer(3.0, self.timer_get_costmap)
+        self.timer_sm_delay = self.create_timer(3.0, self.timer_start_sm, callback_group=self._default_callback_group)
+        self.timer_costmap = self.create_timer(3.0, self.timer_get_costmap, callback_group=self._costmap_callback_group)
 
     def _init_tf_listener(self):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        
+        self.timer_tf = self.create_timer(0.2, self.timer_tf_callback, callback_group=self._default_callback_group)
+
     def _init_navigator(self):
         self.navigator = BasicNavigator()
-        self.navigator.get_logger().set_level(rclpy.logging.LoggingSeverity.FATAL)
+        # self.navigator.get_logger().set_level(rclpy.logging.LoggingSeverity.FATAL)
         self.navigator.waitUntilNav2Active()
 
     def _init_state_machine(self):
@@ -96,23 +100,23 @@ class StateMachineNode(Node):
         except TransformException as ex:
             self.get_logger().info(f'Could not transform base_link to map: {ex}')
 
-        if is_point_in_zone([self.shared_data.x, self.shared_data.y], self.zone_3):
+        if is_point_in_zone([self.shared_data.x, self.shared_data.y], self.shared_data.zone_3):
             self.shared_data.update_current_zone("ZONE_3")
-        elif is_point_in_zone([self.shared_data.x, self.shared_data.y], self.zone_4):
+        elif is_point_in_zone([self.shared_data.x, self.shared_data.y], self.shared_data.zone_4):
             self.shared_data.update_current_zone("ZONE_4")
         else:
             self.shared_data.update_current_zone("ZONE_1")
-        
+
     def timer_start_sm(self):
-        self.timer_sm = self.create_timer(0.2, self.timer_sm_callback)
+        self.timer_sm = self.create_timer(0.2, self.timer_sm_callback, callback_group=self._default_callback_group)
         self.timer_sm_delay.cancel()
-        self.timer_sm_delay = None 
+        self.timer_sm_delay = None
 
     def timer_get_costmap(self):
         costmap = self.navigator.getGlobalCostmap()
         self.shared_data.update_costmap(costmap)
 
-    def timer_sm_callback(self):        
+    def timer_sm_callback(self):
         self.state_machine.execute()
 
     def imu_callback(self, msg):
@@ -133,11 +137,12 @@ class StateMachineNode(Node):
             try:
                 point_in_camera_frame = PointStamped()
                 point_in_camera_frame.header.frame_id = "oak_rgb_camera_optical_frame"
+                point_in_camera_frame.header.stamp = msg.header.stamp
                 point_in_camera_frame.point.x = detection.position.x
                 point_in_camera_frame.point.y = detection.position.y
                 point_in_camera_frame.point.z = detection.position.z
                 point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=0.5))
-                
+
                 if point_in_base_frame.point.z < -0.10 or point_in_base_frame.point.z > 0.20:
                     continue
 
@@ -151,13 +156,14 @@ class StateMachineNode(Node):
                         ema_position = [(self.alpha * object_position[j] + (1 - self.alpha) * stored_position[j]) for j in range(2)]
                         detection_dict[object_id] = tuple(ema_position)
                         break
-                
+
                 if not already_stored:
                     if not self.shared_data.is_circle_free(object_position[0], object_position[1], 0):
+                        
                         continue
 
                     detection_dict[self.get_new_detection_id(detection_dict)] = object_position
-            
+
                 self.shared_data.update_detection_dict(detection_dict)
             except TransformException as ex:
                 self.get_logger().info(f'Could not transform oak_rgb_camera_optical_frame to base_link: {ex}')
@@ -185,14 +191,14 @@ class StateMachineNode(Node):
                 marker.color.b = 0.0
                 marker.id = object_id
                 marker_array.markers.append(marker)
-            
+
             self.marker_pub.publish(marker_array)
 
     def get_new_detection_id(self, detection_dict):
         all_ids = list(detection_dict.keys())
         max_id = max(all_ids) if all_ids else -1
         return max_id + 1
-    
+
     def perform_action(self, action_type, **kwargs):
         action_handlers = {
             'publish_cmd_vel': self._publish_cmd_vel,
@@ -200,7 +206,7 @@ class StateMachineNode(Node):
             'navigate_to_pose': self._navigate_to_pose,
             'abort_navigation': self.navigator.cancelTask,
             'set_initial_pose': self._set_initial_pose,
-            'clear_costmap':self._clear_costmaps,                            
+            'clear_costmap': self._clear_costmaps,
         }
 
         if action_type in action_handlers:
@@ -251,7 +257,6 @@ def main(args=None):
     state_machine_node = StateMachineNode()
 
     executor = MultiThreadedExecutor()
-
     executor.add_node(state_machine_node)
 
     try:
