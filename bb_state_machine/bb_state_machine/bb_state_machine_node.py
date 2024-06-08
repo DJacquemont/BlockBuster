@@ -32,13 +32,14 @@ class StateMachineNode(Node):
         self.alpha = 0.7
         self.display_marker = False
 
+        self.decrease_freq_count = 0
+
         self._declare_parameters()
         self._init_shared_data()
 
         # Create callback groups
         self._priority_callback_group = MutuallyExclusiveCallbackGroup()
-        self._default_callback_group = ReentrantCallbackGroup()
-        self._costmap_callback_group = MutuallyExclusiveCallbackGroup()
+        self._default_callback_group = MutuallyExclusiveCallbackGroup()
 
         self._init_publishers_and_subscribers()
         self._init_timers()
@@ -73,7 +74,7 @@ class StateMachineNode(Node):
 
     def _init_timers(self):
         self.timer_sm_delay = self.create_timer(3.0, self.timer_start_sm, callback_group=self._default_callback_group)
-        self.timer_costmap = self.create_timer(3.0, self.timer_get_costmap, callback_group=self._costmap_callback_group)
+        self.timer_costmap = self.create_timer(3.0, self.timer_get_costmap, callback_group=self._default_callback_group)
 
     def _init_tf_listener(self):
         self.tf_buffer = Buffer()
@@ -157,7 +158,7 @@ class StateMachineNode(Node):
                         break
 
                 if not already_stored:
-                    if not self.shared_data.is_circle_free(object_position[0], object_position[1], 0):
+                    if not self.shared_data.is_circle_free(object_position[0], object_position[1], 0, 150):
                         
                         continue
 
@@ -236,6 +237,11 @@ class StateMachineNode(Node):
         goal_pose.pose.orientation.z = math.sin(float(kwargs.get('goal_theta', 0)) / 2.0)
         goal_pose.pose.orientation.w = math.cos(float(kwargs.get('goal_theta', 0)) / 2.0)
         self.navigator.goToPose(goal_pose)
+
+        # if self.decrease_freq_count % 8 == 0:
+        #     self.navigator.goToPose(goal_pose)
+        # self.decrease_freq_count += 1
+
 
     def _set_initial_pose(self, **kwargs):
         initial_pose = PoseStamped()

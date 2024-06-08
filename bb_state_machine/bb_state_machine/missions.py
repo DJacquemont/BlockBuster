@@ -8,28 +8,35 @@ from bb_state_machine.super_sate import SuperState
 class Mission1(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
         super().__init__(name, shared_data, action_interface, logger)
-        self.add_substate("SEARCH_Z3", AutoNavT("SEARCH_Z3", self.shared_data, action_interface, logger, filename="/m1_search_z3.csv", zone='ZONE_3'))
-        self.add_substate("GOTO_Z3", AutoNavA("GOTO_Z3", self.shared_data, action_interface, logger, filename="/m1_goto_z3.csv"))
-        self.add_substate("HOMING", AutoNavA("HOMING", self.shared_data, action_interface, logger, filename="/m1_homing.csv"))
-        self.add_substate("PUSH_BUTTON", ManNav("PUSH_BUTTON", self.shared_data, action_interface, logger, filename="/m1_push_button.csv"))
-        self.add_substate("UNLOADING", ManNav("UNLOADING", self.shared_data, action_interface, logger, filename="/m1_unloading.csv"))
+        self.add_substate("SEARCH_Z3", AutoNavT("SEARCH_Z3", self.shared_data, action_interface, logger, filename="/mission1/m1_search_z3.csv", zone='ZONE_3'))
+        self.add_substate("GOTO_Z3", AutoNavA("GOTO_Z3", self.shared_data, action_interface, logger, filename="/mission1/m1_goto_z3.csv"))
+        self.add_substate("REPOSITIONING", AutoNavA("REPOSITIONING", self.shared_data, action_interface, logger, filename="/mission1/m1_goto_z3.csv"))
+        self.add_substate("HOMING", AutoNavA("HOMING", self.shared_data, action_interface, logger, filename="/mission1/m1_homing.csv"))
+        self.add_substate("PUSH_BUTTON", ManNav("PUSH_BUTTON", self.shared_data, action_interface, logger, filename="/mission1/m1_push_button.csv"))
+        self.add_substate("UNLOADING", ManNav("UNLOADING", self.shared_data, action_interface, logger, filename="/general/unloading.csv"))
         self.default_substate = "GOTO_Z3"
 
         self.zone_3_completed = False
+        self.button_pressed = False
+        self.position_door = [7,-2.5]
 
     def determine_next_state(self):
         current_ss_name = self.current_substate.name
         current_ss_status = self.current_substate.status
         
         if current_ss_name == "GOTO_Z3" and current_ss_status == "COMPLETED":
-            if self.shared_data.button_pressed:
+            if self.button_pressed:
                 return "SEARCH_Z3"
             else:
                 return "PUSH_BUTTON"
 
         elif current_ss_name == "PUSH_BUTTON" and current_ss_status == "COMPLETED":
-            self.shared_data.update_button_pressed()
-            return "SEARCH_Z3"
+            if self.shared_data.is_circle_free(self.position_door[0], self.position_door[1], 1, 100):
+                self.button_pressed = True
+                return "SEARCH_Z3"
+            else:
+                self.status = "COMPLETED"
+                return None
 
         elif current_ss_name == "SEARCH_Z3" and current_ss_status == "STORAGE_FULL":
             return "HOMING"
@@ -55,19 +62,19 @@ class Mission1(SuperState):
 class Mission2(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
         super().__init__(name, shared_data, action_interface, logger)
-        self.add_substate("SEARCH_Z4", AutoNavT("SEARCH_Z4", self.shared_data, action_interface, logger, filename="/m2_search_z4.csv", zone='ZONE_4'))
-        self.add_substate("GOTO_Z4", AutoNavA("GOTO_Z4", self.shared_data, action_interface, logger, filename="/m2_goto_z4.csv"))
-        self.add_substate("SLOPE_UP_1", SlopeClimbing("SLOPE_UP_1", self.shared_data, action_interface, logger, speed=0.4, angle_limit=1.51, angular_speed_z = 0.06, direction_up=True))
-        self.add_substate("SLOPE_UP_2", SlopeClimbing("SLOPE_UP_2", self.shared_data, action_interface, logger, speed=0.4, angle_limit=1.51, angular_speed_z = 0.06, direction_up=False))
-        self.add_substate("APPROACH_SLOPE_LOW", ManNav("APPROACH_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/m2_approach_slope_low.csv"))
-        self.add_substate("LEAVE_SLOPE_HIGH", ManNav("LEAVE_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/m2_leave_slope_high.csv"))
-        self.add_substate("GOTO_SLOPE_HIGH", AutoNavA("GOTO_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/m2_goto_slope_high.csv"))
-        self.add_substate("APPROACH_SLOPE_HIGH", ManNav("APPROACH_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/m2_approach_slope_high.csv"))
+        self.add_substate("SEARCH_Z4", AutoNavT("SEARCH_Z4", self.shared_data, action_interface, logger, filename="/mission2/m2_search_z4.csv", zone='ZONE_4'))
+        self.add_substate("GOTO_Z4", AutoNavA("GOTO_Z4", self.shared_data, action_interface, logger, filename="/mission2/m2_goto_z4.csv"))
+        self.add_substate("SLOPE_UP_1", SlopeClimbing("SLOPE_UP_1", self.shared_data, action_interface, logger, speed=0.5, angle_limit=1.51, angular_speed_z = 0.08, direction_up=True))
+        self.add_substate("SLOPE_UP_2", SlopeClimbing("SLOPE_UP_2", self.shared_data, action_interface, logger, speed=0.5, angle_limit=1.51, angular_speed_z = 0.08, direction_up=False))
+        self.add_substate("APPROACH_SLOPE_LOW", ManNav("APPROACH_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/mission2/m2_approach_slope_low.csv"))
+        self.add_substate("LEAVE_SLOPE_HIGH", ManNav("LEAVE_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/mission2/m2_leave_slope_high.csv"))
+        self.add_substate("GOTO_SLOPE_HIGH", AutoNavA("GOTO_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/mission2/m2_goto_slope_high.csv"))
+        self.add_substate("APPROACH_SLOPE_HIGH", ManNav("APPROACH_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/mission2/m2_approach_slope_high.csv"))
         self.add_substate("SLOPE_DOWN_1", SlopeClimbing("SLOPE_DOWN_1", self.shared_data, action_interface, logger, speed=0.25, angle_limit=1.15, angular_speed_z = -0.1, direction_up=False))
         self.add_substate("SLOPE_DOWN_2", SlopeClimbing("SLOPE_DOWN_2", self.shared_data, action_interface, logger, speed=0.25, angle_limit=1.15, angular_speed_z = -0.1, direction_up=True))
-        self.add_substate("LEAVE_SLOPE_LOW", ManNav("LEAVE_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/m2_leave_slope_low.csv"))
-        self.add_substate("HOMING", AutoNavA("HOMING", self.shared_data, action_interface, logger, filename="/m2_homing.csv"))
-        self.add_substate("UNLOADING", ManNav("UNLOADING", self.shared_data, action_interface, logger, filename="/m2_unloading.csv"))
+        self.add_substate("LEAVE_SLOPE_LOW", ManNav("LEAVE_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/mission2/m2_leave_slope_low.csv"))
+        self.add_substate("HOMING", AutoNavA("HOMING", self.shared_data, action_interface, logger, filename="/mission2/m2_homing.csv"))
+        self.add_substate("UNLOADING", ManNav("UNLOADING", self.shared_data, action_interface, logger, filename="/general/unloading.csv"))
         self.default_substate = "GOTO_Z4"
 
         self.mission_2_completed = False

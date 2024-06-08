@@ -102,14 +102,11 @@ class BaseState(ABC):
                     if data_type == 'waypoints_t':
                         if len(line) == 4:
                             try:
-                                # if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
-                                #     continue
-
                                 target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3])))
                             except ValueError:
                                 self.logger.error(f"Invalid number format in line: {line}")
                         else:
-                            self.logger.error(f"Malformed line in command file, expected 2 elements but got {len(line)}: {line}")
+                            self.logger.error(f"Malformed line in command file, expected 4 elements but got {len(line)}: {line}")
 
                     elif data_type == 'commands':
                         if len(line) == 2:
@@ -119,14 +116,11 @@ class BaseState(ABC):
                         elif len(line) == 4:
                             target_list.append((line[0], line[1], line[2], line[3]))
                         else:
-                            self.logger.error(f"Malformed line in command file, expected 2 or 3 elements but got {len(line)}: {line}")
+                            self.logger.error(f"Malformed line in command file, expected 2, 3 or 4 elements but got {len(line)}: {line}")
 
                     elif data_type == 'waypoints_a':
                         if len(line) == 4:
                             try:
-                                # if not self.shared_data.is_circle_free(float(line[0]), float(line[1]), 5):
-                                #     continue
-
                                 target_list.append((float(line[0]), float(line[1]), float(line[2]), float(line[3])))
                             except ValueError:
                                 self.logger.error(f"Invalid number format in line: {line}")

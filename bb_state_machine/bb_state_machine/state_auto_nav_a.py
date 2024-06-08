@@ -14,7 +14,7 @@ class AutoNavA(BaseState):
         self.goal_reached = True
         self.manually_navigating = False
         self.goal_approach_status = None
-        self.target_theta_speed = 0.4
+        self.target_theta_speed = 0.5
         self.target_x_speed = 0.15
         self.start_pose = None
 
@@ -31,7 +31,7 @@ class AutoNavA(BaseState):
 
         if self.waypoints:
             self.set_current_waypoint()
-            self.initiate_navigation()
+            self.perform_auto_navigation()
         else:
             self.logger.error("No valid waypoints found in file: {}".format(self.command_file))
             self.status = "COMPLETED"
@@ -48,7 +48,7 @@ class AutoNavA(BaseState):
         self.current_waypoint = self.waypoints[self.waypoint_index]
         self.goal_reached = False
 
-    def initiate_navigation(self):
+    def perform_auto_navigation(self):
         if self.current_waypoint:
             self.action_interface('navigate_to_pose', 
                                   goal_x=self.current_waypoint[0], 
@@ -68,12 +68,16 @@ class AutoNavA(BaseState):
 
     def update_navigation_status(self):
         dist_current_target = self.distance_to_current_waypoint()
+        
         if self.is_reached(dist_current_target):
             self.advance_waypoint()
         elif self.is_last_waypoint(dist_current_target) and not self.manually_navigating:
             self.start_manual_navigation()
+        
         if self.manually_navigating:
             self.perform_manual_navigation()
+        else:
+            self.perform_auto_navigation()        
     
     def distance_to_current_waypoint(self) -> float:
         return math.sqrt((self.shared_data.x - self.current_waypoint[0]) ** 2 + 
@@ -89,7 +93,6 @@ class AutoNavA(BaseState):
         self.goal_reached = True
         self.waypoint_index += 1
         self.set_current_waypoint()
-        self.initiate_navigation()
 
     def start_manual_navigation(self):
         self.action_interface('abort_navigation')

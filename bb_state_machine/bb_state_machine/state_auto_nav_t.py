@@ -12,13 +12,16 @@ class AutoNavT(BaseState):
         self.target_x_speed = 0.3
         self.zone = zone
         assert zone!=''
+        
         self.reset_navigation_state()
+
+        commands = self.load_data(self.command_file, "waypoints_t")
+        self.waypoints = [command[:2] for command in commands]
+        self.distance_threshold_wp = [command[2] for command in commands]
+        self.spin_in_place = [command[3] for command in commands]
                 
 
     def reset_navigation_state(self):
-        self.waypoints = []
-        self.spin_in_place = []
-        self.distance_threshold_wp = []
         self.distance_threshold_duplo = 0.25
         self.tracking = None
         self.tracking_id = None
@@ -36,10 +39,6 @@ class AutoNavT(BaseState):
     def enter(self):
         self.logger.info(f"Entering state: {self.name}")
         self.status = "RUNNING"
-        commands = self.load_data(self.command_file, "waypoints_t")
-        self.waypoints = [command[:2] for command in commands]
-        self.distance_threshold_wp = [command[2] for command in commands]
-        self.spin_in_place = [command[3] for command in commands]
 
         if self.waypoints:
             self.state = "TRACKING"
@@ -54,6 +53,8 @@ class AutoNavT(BaseState):
         self.reset_navigation_state()
 
     def execute(self):
+        self.logger.info('-----------------------------------------')
+
         if (self.shared_data.current_zone == 'ZONE_3' and self.shared_data.duplo_left_z3 <= 0) or \
             (self.shared_data.current_zone == 'ZONE_4' and self.shared_data.duplo_left_z4 <= 0) or \
             (self.shared_data.duplos_stored >= self.shared_data.max_duplos_stored):
@@ -65,10 +66,8 @@ class AutoNavT(BaseState):
             self.searching_duplo()
         elif self.state == "ROTATION":
             self.executing_360()
-        # elif self.state == "ROTATION":
-        #     angle_min = 0
-        #     angle_max = 3.15/2
-        #     self.executing_rotation_between_angles(angle_min, angle_max)
+
+        self.logger.info('-----------------------------------------')
 
     def searching_duplo(self):
         self.logger.info(f'Detection {self.shared_data.detection_dict}')
@@ -78,9 +77,15 @@ class AutoNavT(BaseState):
 
         dist_current_target = self.calculate_current_target_distance()
 
+        self.logger.info(f"Closest duplo: index {i_closest_duplo}, distance {dist_closest_duplo}")
+        self.logger.info(f"Closest waypoint: index {i_closest_waypoint}, distance {dist_closest_waypoint}")
+        self.logger.info(f"Current target distance: {dist_current_target}")
+
         if not dist_current_target or dist_current_target > 0.4:
+            self.logger.info("update_tracking_target")
             self.update_tracking_target(dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo)
         else:
+            self.logger.info("handle_waypoint_and_duplo_reach")
             self.handle_waypoint_and_duplo_reach(dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo)
 
     def find_closest_target_dict(self, targets):
@@ -109,7 +114,7 @@ class AutoNavT(BaseState):
         i_closest = None
         for i, target in enumerate(targets):
             target_x, target_y = target
-            if not self.shared_data.is_circle_free(target_x, target_y, 0):
+            if not self.shared_data.is_circle_free(target_x, target_y, 0, 50):
                 continue
 
             distance = math.sqrt((self.shared_data.x - target_x) ** 2 + (self.shared_data.y - target_y) ** 2)
@@ -162,8 +167,10 @@ class AutoNavT(BaseState):
         threshold = 0.4 if i_closest_waypoint is None else self.distance_threshold_wp[i_closest_waypoint]
 
         if dist_closest_waypoint <= threshold and not self.target_locked:
+            self.logger.info("handle_waypoint_reach")
             self.handle_waypoint_reach(i_closest_waypoint)
         if dist_closest_duplo <= self.distance_threshold_duplo:
+            self.logger.info("handle_duplo_reach")
             self.handle_duplo_reach(i_closest_duplo)
 
     def handle_waypoint_reach(self, i_closest_waypoint):
@@ -252,45 +259,3 @@ class AutoNavT(BaseState):
         self.state = "TRACKING"
         self.rotation_accumulated = 0
         self.rotation_target = None
-        # self.rotation_direction = None
-
-    # def executing_rotation_between_angles(self, angle_min, angle_max):
-    #     if self.rotation_target is None:
-    #         self.rotation_accumulated = 0
-    #         current_angle = self.shared_data.theta % (2 * np.pi)
-            
-    #         if current_angle > np.pi:
-    #             current_angle -= 2 * np.pi
-
-    #         if current_angle < angle_min or current_angle > angle_max:
-    #             if abs(current_angle - angle_max) < abs(current_angle - angle_min):
-    #                 self.rotation_target = angle_min
-    #                 self.rotation_direction = -1  # Counter-clockwise
-    #             else:
-    #                 self.rotation_target = angle_max
-    #                 self.rotation_direction = 1   # Clockwise
-    #         else:
-    #             if abs(current_angle - angle_max) < abs(current_angle - angle_min):
-    #                 self.rotation_target = angle_min
-    #                 self.rotation_direction = -1  # Counter-clockwise
-    #             else:
-    #                 self.rotation_target = angle_max
-    #                 self.rotation_direction = 1   # Clockwise
-
-    #     if self.goal_reached:
-    #         self.goal_reached = False
-    #         current_angle = self.shared_data.theta % (2 * np.pi)
-            
-    #         if current_angle > np.pi:
-    #             current_angle -= 2 * np.pi
-
-    #         if self.rotation_direction == 1:
-    #             self.rotation_target = angle_max
-    #         else:
-    #             self.rotation_target = angle_min
-
-    #         if current_angle >= angle_min and current_angle <= angle_max:
-    #             self.finish_rotation()
-    #             return
-
-    #     self.execute_rotation(self.rotation_target, self.target_theta_speed * self.rotation_direction, control=False)

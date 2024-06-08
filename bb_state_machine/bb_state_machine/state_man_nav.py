@@ -38,7 +38,10 @@ class ManNav(BaseState):
             command_type, value1, value2, value3 = self.current_command
             self.logger.debug(f"Executing command: {command_type} {value1} {value2} {value3}")
             if command_type == 'r':
-                self.execute_rotation(float(value1), float(value2))
+                if value3:
+                    self.execute_rotation(float(value1), float(value2), control=int(value3))
+                else:
+                    self.execute_rotation(float(value1), float(value2))
             elif command_type == 't':
                 if value3:
                     self.execute_translation(float(value1), float(value2), angular_speed_z=float(value3))

@@ -22,7 +22,7 @@ class SharedData:
 
         self._duplos_collected = 0
         self._duplos_stored = 0
-        self._max_duplos_stored = 3
+        self._max_duplos_stored = 4
 
         self._duplos_left_z3 = 6
         self._duplos_left_z4 = 6
@@ -31,8 +31,6 @@ class SharedData:
         self._current_zone = None
         self._zone_3 = [4.5, -2.5, 7.5, 0.5]
         self._zone_4 = [4.5, -7.5, 7.5, -5.5]
-
-        self._button_pressed = False
 
         self._costmap = None
 
@@ -113,10 +111,6 @@ class SharedData:
         return self._zone_4
     
     @property
-    def button_pressed(self):
-        return self._button_pressed
-    
-    @property
     def costmap(self):
         return self._costmap
 
@@ -161,13 +155,10 @@ class SharedData:
     def update_current_zone(self, zone):
         self._current_zone = zone
 
-    def update_button_pressed(self):
-        self._button_pressed = True
-
     def update_costmap(self, costmap):
         self._costmap = costmap
 
-    def is_circle_free(self, x, y, r):
+    def is_circle_free(self, x, y, r, threshold):
         if self.costmap is None:
             return False
 
@@ -185,6 +176,6 @@ class SharedData:
                     check_y = map_y + j
                     if check_x < 0 or check_x >= width or check_y < 0 or check_y >= height:
                         return False
-                    if data[check_y, check_x] > 50:
+                    if data[check_y, check_x] > threshold:
                         return False
         return True
