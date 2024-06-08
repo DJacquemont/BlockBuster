@@ -29,10 +29,13 @@ class SharedData:
         self._duplos_left_z1 = 15
 
         self._current_zone = None
+        self._zone_2 = [0.0, -7.5, 1.9, -4.1]
         self._zone_3 = [4.5, -2.5, 7.5, 0.5]
         self._zone_4 = [4.5, -7.5, 7.5, -5.5]
 
         self._costmap = None
+
+        self._front_distance = None
 
     @property
     def x(self):
@@ -113,6 +116,10 @@ class SharedData:
     @property
     def costmap(self):
         return self._costmap
+    
+    @property
+    def front_distance(self):
+        return self._front_distance
 
     def update_position(self, x, y, theta):
         self._x = x
@@ -157,6 +164,9 @@ class SharedData:
 
     def update_costmap(self, costmap):
         self._costmap = costmap
+
+    def update_front_distance(self, front_distance):
+        self._front_distance = front_distance
 
     def is_circle_free(self, x, y, r, threshold):
         if self.costmap is None:

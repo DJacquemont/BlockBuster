@@ -20,3 +20,9 @@ def is_point_in_zone(point, zone):
     x, y = point
     x1, y1, x2, y2 = zone
     return x1 <= x <= x2 and y1 <= y <= y2
+
+def is_point_not_in_zone(point, *zones):
+    for zone in zones:
+        if is_point_in_zone(point, zone):
+            return False
+    return True

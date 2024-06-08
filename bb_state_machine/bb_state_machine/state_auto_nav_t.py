@@ -22,7 +22,7 @@ class AutoNavT(BaseState):
                 
 
     def reset_navigation_state(self):
-        self.distance_threshold_duplo = 0.25
+        self.distance_threshold = 0.25
         self.tracking = None
         self.tracking_id = None
         self.state = None
@@ -53,10 +53,9 @@ class AutoNavT(BaseState):
         self.reset_navigation_state()
 
     def execute(self):
-        self.logger.info('-----------------------------------------')
-
         if (self.shared_data.current_zone == 'ZONE_3' and self.shared_data.duplo_left_z3 <= 0) or \
             (self.shared_data.current_zone == 'ZONE_4' and self.shared_data.duplo_left_z4 <= 0) or \
+            (self.shared_data.current_zone == 'ZONE_1' and self.shared_data.duplo_left_z1 <= 0) or \
             (self.shared_data.duplos_stored >= self.shared_data.max_duplos_stored):
             self.logger.info("Storage full or no duplos left")
             self.status = "STORAGE_FULL"
@@ -67,25 +66,15 @@ class AutoNavT(BaseState):
         elif self.state == "ROTATION":
             self.executing_360()
 
-        self.logger.info('-----------------------------------------')
-
     def searching_duplo(self):
-        self.logger.info(f'Detection {self.shared_data.detection_dict}')
-        self.logger.info(f'Waypoints {self.waypoints}')
         dist_closest_duplo, i_closest_duplo = self.find_closest_target_dict(self.shared_data.detection_dict)
         dist_closest_waypoint, i_closest_waypoint = self.find_closest_target_list(self.waypoints)
 
         dist_current_target = self.calculate_current_target_distance()
 
-        self.logger.info(f"Closest duplo: index {i_closest_duplo}, distance {dist_closest_duplo}")
-        self.logger.info(f"Closest waypoint: index {i_closest_waypoint}, distance {dist_closest_waypoint}")
-        self.logger.info(f"Current target distance: {dist_current_target}")
-
-        if not dist_current_target or dist_current_target > 0.4:
-            self.logger.info("update_tracking_target")
+        if not dist_current_target or dist_current_target > self.distance_threshold:
             self.update_tracking_target(dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo)
         else:
-            self.logger.info("handle_waypoint_and_duplo_reach")
             self.handle_waypoint_and_duplo_reach(dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo)
 
     def find_closest_target_dict(self, targets):
@@ -99,8 +88,13 @@ class AutoNavT(BaseState):
             elif self.zone == 'ZONE_4':
                 if not is_point_in_zone([target_x, target_y], self.shared_data.zone_4):
                     continue
+            elif self.zone == 'ZONE_1':
+                if is_point_in_zone([target_x, target_y], self.shared_data.zone_3) or \
+                    is_point_in_zone([target_x, target_y], self.shared_data.zone_4) or \
+                    is_point_in_zone([target_x, target_y], self.shared_data.zone_4):
+                    continue
             else :
-                # TODO: to be implemented
+                self.logger.error("NOT SUPPOSED TO BE HERE")
                 pass
             
             distance = math.sqrt((self.shared_data.x - target_x) ** 2 + (self.shared_data.y - target_y) ** 2)
@@ -143,20 +137,17 @@ class AutoNavT(BaseState):
             if tracking == "WP":
                 self.tracking_id = i_closest_waypoint
                 target_x, target_y = self.waypoints[self.tracking_id]
-                self.logger.info(f"Tracking waypoint: {target_x}, {target_y}")
             else:
                 self.tracking_id = i_closest_duplo
                 target_x, target_y = self.shared_data.detection_dict[self.tracking_id]
-                self.logger.info(f"Tracking duplo: {target_x}, {target_y}")
             self.action_interface('navigate_to_pose', goal_x=target_x, goal_y=target_y, goal_theta=0)
         else:
-            self.logger.info("No waypoints or duplos to track")
             self.status = "COMPLETED"
 
     def decide_tracking_target(self, dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo):
         if isinstance(i_closest_waypoint, int) and isinstance(i_closest_duplo, int):
-            return "DP"
             # return "WP" if dist_closest_waypoint + 1 < dist_closest_duplo else "DP"
+            return "DP"
         elif isinstance(i_closest_waypoint, int):
             return "WP"
         elif isinstance(i_closest_duplo, int):
@@ -164,13 +155,10 @@ class AutoNavT(BaseState):
         return None
 
     def handle_waypoint_and_duplo_reach(self, dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo):
-        threshold = 0.4 if i_closest_waypoint is None else self.distance_threshold_wp[i_closest_waypoint]
 
-        if dist_closest_waypoint <= threshold and not self.target_locked:
-            self.logger.info("handle_waypoint_reach")
+        if dist_closest_waypoint <= self.distance_threshold and not self.target_locked:
             self.handle_waypoint_reach(i_closest_waypoint)
-        if dist_closest_duplo <= self.distance_threshold_duplo:
-            self.logger.info("handle_duplo_reach")
+        if dist_closest_duplo <= self.distance_threshold:
             self.handle_duplo_reach(i_closest_duplo)
 
     def handle_waypoint_reach(self, i_closest_waypoint):

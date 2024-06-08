@@ -9,7 +9,7 @@ from bb_state_machine.utils import quaternion_to_euler, is_point_in_zone
 from geometry_msgs.msg import Twist, PointStamped, PoseStamped, WrenchStamped
 from std_msgs.msg import Empty, Float64MultiArray
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, LaserScan
 from tf2_ros import TransformException, Buffer, TransformListener
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
@@ -29,7 +29,7 @@ class StateMachineNode(Node):
         self.get_logger().info('Blockbuster State Machine node successfully started')
 
         self.distance_threshold = 0.4
-        self.alpha = 0.7
+        self.alpha = 0.5
         self.display_marker = False
 
         self.decrease_freq_count = 0
@@ -66,6 +66,7 @@ class StateMachineNode(Node):
         self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_callback, 1, callback_group=self._default_callback_group)
         self.sys_info_sub = self.create_subscription(WrenchStamped, '/fts_broadcaster/wrench', self.sys_info_callback, 1, callback_group=self._default_callback_group)
         self.odom_sub = self.create_subscription(Odometry, '/diff_cont/odom', self.odom_callback, 1, callback_group=self._default_callback_group)
+        self.scan_sub = self.create_subscription(LaserScan, '/scan', self.scan_callback, 1, callback_group=self._default_callback_group)
 
         self.yolov6_sub = self.create_subscription(SpatialDetectionArray, '/color/yolov6_Spatial_detections', self.yolov6_callback, 10, callback_group=self._priority_callback_group)
 
@@ -130,6 +131,14 @@ class StateMachineNode(Node):
 
     def odom_callback(self, msg):
         self.shared_data.update_odom_position(msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.orientation.z)
+
+    def scan_callback(self, msg):
+        front_index = int((0 - msg.angle_min) / msg.angle_increment)
+        front_distance = msg.ranges[front_index]
+        if front_distance!=float('inf'):
+            self.shared_data.update_front_distance(front_distance)
+            # self.get_logger().info(f'Distance in front of the robot: {front_distance:.2f} meters')
+
 
     def yolov6_callback(self, msg):
         detection_dict = self.shared_data.detection_dict
@@ -238,7 +247,7 @@ class StateMachineNode(Node):
         goal_pose.pose.orientation.w = math.cos(float(kwargs.get('goal_theta', 0)) / 2.0)
         self.navigator.goToPose(goal_pose)
 
-        # if self.decrease_freq_count % 8 == 0:
+        # if self.decrease_freq_count % 10 == 0:
         #     self.navigator.goToPose(goal_pose)
         # self.decrease_freq_count += 1
 
