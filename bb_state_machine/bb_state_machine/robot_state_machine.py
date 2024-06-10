@@ -35,9 +35,15 @@ class RobotStateMachine:
         # self.logger.info("All missions completed.")
         
         if current_name == "MISSION_1":
-            return "MISSION_2"
+            return "MISSION_3"
 
+        elif current_name == "MISSION_3":
+            return "MISSION_2"
+        
         elif current_name == "MISSION_2":
+            return "MISSION_4"
+        
+        elif current_name == "MISSION_4":
             self.status = "COMPLETED"
             self.logger.info("All missions completed.")
             return None

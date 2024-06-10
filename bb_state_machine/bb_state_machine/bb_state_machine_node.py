@@ -92,7 +92,8 @@ class StateMachineNode(Node):
         self.state_machine.add_mission("MISSION_1", Mission1("MISSION_1", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_2", Mission2("MISSION_2", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
-        self.state_machine.set_mission("MISSION_2")
+        self.state_machine.add_mission("MISSION_4", Mission3("MISSION_4", self.shared_data, self.perform_action, self.get_logger()))
+        self.state_machine.set_mission("MISSION_1")
 
     def timer_tf_callback(self):
         try:
@@ -123,7 +124,6 @@ class StateMachineNode(Node):
 
     def imu_callback(self, msg):
         pitch, _, _ = quaternion_to_euler(msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w)
-        # self.get_logger().info(f'Pitch cam: {pitch}')
         self.shared_data.update_pitch(pitch)
 
     def sys_info_callback(self, msg):
@@ -132,7 +132,8 @@ class StateMachineNode(Node):
         self.shared_data.update_system_infos(battery_level, duplo_cnt)
 
     def odom_callback(self, msg):
-        self.shared_data.update_odom_position(msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.orientation.z)
+        _,_,yaw = quaternion_to_euler(msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w)
+        self.shared_data.update_odom_position(msg.pose.pose.position.x, msg.pose.pose.position.y, yaw)
 
     def scan_callback(self, msg):
         front_index = int((0 - msg.angle_min) / msg.angle_increment)

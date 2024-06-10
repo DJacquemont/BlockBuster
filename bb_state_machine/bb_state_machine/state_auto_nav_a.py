@@ -14,7 +14,7 @@ class AutoNavA(BaseState):
         self.goal_reached = True
         self.manually_navigating = False
         self.goal_approach_status = None
-        self.target_theta_speed = 0.5
+        self.target_theta_speed = 0.35
         self.target_x_speed = 0.15
         self.start_pose = None
 

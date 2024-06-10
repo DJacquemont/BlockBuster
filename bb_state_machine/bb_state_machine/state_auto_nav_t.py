@@ -127,7 +127,7 @@ class AutoNavT(BaseState):
         i_closest = None
         for i, target in enumerate(targets):
             target_x, target_y = target
-            if not self.shared_data.is_circle_free(target_x, target_y, 0, 210):
+            if not self.shared_data.is_circle_free(target_x, target_y, 0, 240):
                 continue
 
             distance = math.sqrt((self.shared_data.x - target_x) ** 2 + (self.shared_data.y - target_y) ** 2)
@@ -198,7 +198,7 @@ class AutoNavT(BaseState):
             self.waypoints.pop(self.tracking_id)
             self.distance_threshold_wp.pop(self.tracking_id)
             self.spin_in_place.pop(self.tracking_id)    
-            self.angle_range_list.pop(self.tracking_id)   
+            # self.angle_range_list.pop(self.tracking_id)   
             self.tracking = None
             self.tracking_id = None
 
@@ -206,7 +206,7 @@ class AutoNavT(BaseState):
             self.waypoints.pop(i_closest_waypoint)
             self.distance_threshold_wp.pop(i_closest_waypoint)
             self.spin_in_place.pop(i_closest_waypoint)
-            self.angle_range_list.pop(self.tracking_id)   
+            # self.angle_range_list.pop(self.tracking_id)   
 
     def handle_duplo_reach(self, i_closest_duplo):
         if self.duplo_approach_status is None:

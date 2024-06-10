@@ -62,10 +62,6 @@ class BaseState(ABC):
         target_theta = self.normalize_angle(angle)
         angle_diff = self.angle_difference(target_theta, current_theta)
 
-        # self.logger.info(f"Current theta: {current_theta}")
-        # self.logger.info(f"Target theta: {target_theta}")
-        # self.logger.info(f"Angle diff: {angle_diff}")
-
         if control:
             angular_speed = np.exp(np.abs(angle_diff)*2-1) * np.abs(max_angular_speed)
             angular_speed = max(min(angular_speed, max_angular_speed), self.min_angular_speed)

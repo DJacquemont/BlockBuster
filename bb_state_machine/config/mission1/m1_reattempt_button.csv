@@ -1,6 +1,6 @@
 #command,distance/angle,velocity/angularspeed,angular_z(t only)
 r,3.14,0.3
-t,-0.30,0.15
+t,-0.40,0.15
 t,0.20,0.2
 r,1.57,0.3
 w,1

@@ -15,6 +15,7 @@ setup(
         (os.path.join('share', package_name, 'config', 'mission1'), glob(os.path.join('config', 'mission1', '*'))),
         (os.path.join('share', package_name, 'config', 'mission2'), glob(os.path.join('config', 'mission2', '*'))),
         (os.path.join('share', package_name, 'config', 'mission3'), glob(os.path.join('config', 'mission3', '*'))),
+        (os.path.join('share', package_name, 'config', 'mission4'), glob(os.path.join('config', 'mission4', '*'))),
         (os.path.join('share', package_name, 'config', 'general'), glob(os.path.join('config', 'general', '*')))
     ],
     install_requires=['setuptools'],
