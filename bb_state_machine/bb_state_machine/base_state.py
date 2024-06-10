@@ -53,10 +53,18 @@ class BaseState(ABC):
             diff -= 2 * np.pi
         return diff
 
-    def execute_rotation(self, angle, max_angular_speed, control=True):
-        current_theta = self.normalize_angle(self.shared_data.theta)
+    def execute_rotation(self, angle, max_angular_speed, control=True, use_odom=False):
+        if use_odom:
+            current_theta = self.normalize_angle(self.shared_data.odom_theta)
+        else:
+            current_theta = self.normalize_angle(self.shared_data.theta)
+
         target_theta = self.normalize_angle(angle)
         angle_diff = self.angle_difference(target_theta, current_theta)
+
+        # self.logger.info(f"Current theta: {current_theta}")
+        # self.logger.info(f"Target theta: {target_theta}")
+        # self.logger.info(f"Angle diff: {angle_diff}")
 
         if control:
             angular_speed = np.exp(np.abs(angle_diff)*2-1) * np.abs(max_angular_speed)
@@ -101,12 +109,11 @@ class BaseState(ABC):
                     
                     if data_type == 'waypoints_t':
                         if len(line) == 4:
-                            try:
-                                target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3])))
-                            except ValueError:
-                                self.logger.error(f"Invalid number format in line: {line}")
+                            target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3]), None, None))
+                        elif len(line) == 6:
+                            target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3]), float(line[4]), float(line[5])))
                         else:
-                            self.logger.error(f"Malformed line in command file, expected 4 elements but got {len(line)}: {line}")
+                            self.logger.error(f"Malformed line in command file, expected 4 or 6 elements but got {len(line)}: {line}")
 
                     elif data_type == 'commands':
                         if len(line) == 2:

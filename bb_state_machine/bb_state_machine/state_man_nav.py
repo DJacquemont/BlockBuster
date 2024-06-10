@@ -2,7 +2,7 @@ from bb_state_machine.base_state import BaseState
 import time
 
 class ManNav(BaseState):
-    def __init__(self, name, shared_data, action_interface, logger, filename):
+    def __init__(self, name, shared_data, action_interface, logger, filename, use_odom=False):
         super().__init__(name, shared_data, action_interface, logger)
         self.action_interface = action_interface
         self.command_file = shared_data.data_path + filename
@@ -13,6 +13,7 @@ class ManNav(BaseState):
         self.start_pose = None
         self.wait_start_time = None
         self.wait_duration = None
+        self.use_odom = use_odom
 
     def enter(self):
         self.logger.info(f"Entering state: {self.name}")
@@ -23,7 +24,10 @@ class ManNav(BaseState):
         if self.commands:
             self.current_command = self.commands[self.command_index]
             self.goal_reached = False
-            self.start_pose = self.normalize_pose([self.shared_data.x, self.shared_data.y, self.shared_data.theta])
+            if self.use_odom:
+                self.start_pose = self.normalize_pose([self.shared_data.odom_x, self.shared_data.odom_y, self.shared_data.odom_theta])
+            else:
+                self.start_pose = self.normalize_pose([self.shared_data.x, self.shared_data.y, self.shared_data.theta])
             self.logger.info(f'Starting pose: {self.start_pose}')
         else:
             self.logger.error("No valid commands found in file: {}".format(self.command_file))
@@ -38,18 +42,27 @@ class ManNav(BaseState):
             command_type, value1, value2, value3 = self.current_command
             self.logger.debug(f"Executing command: {command_type} {value1} {value2} {value3}")
             if command_type == 'r':
+                # self.logger.info(f"Execute rotation: {command_type} {value1} {value2} {value3}")
                 if value3:
-                    self.execute_rotation(float(value1), float(value2), control=int(value3))
+                    self.execute_rotation(float(value1), float(value2), control=int(value3), use_odom=self.use_odom)
                 else:
-                    self.execute_rotation(float(value1), float(value2))
+                    self.execute_rotation(float(value1), float(value2), use_odom=self.use_odom)
             elif command_type == 't':
+                # self.logger.info(f"Execute translation: {command_type} {value1} {value2} {value3}")
                 if value3:
-                    self.execute_translation(float(value1), float(value2), angular_speed_z=float(value3))
+                    self.execute_translation(float(value1), float(value2), angular_speed_z=float(value3), use_odom=self.use_odom)
                 else:
-                    self.execute_translation(float(value1), float(value2))
+                    self.execute_translation(float(value1), float(value2), use_odom=self.use_odom)
+            elif command_type == 'lf':
+                # self.logger.info(f"Execute translation with laser: {command_type} {value1} {value2}")
+                self.execute_translation_w_laser(float(value1), float(value2), laser="FRONT_DISTANCE")
+            elif command_type == 'lr':
+                # self.logger.info(f"Execute translation with laser: {command_type} {value1} {value2}")
+                self.execute_translation_w_laser(float(value1), float(value2), laser="REAR_DISTANCE")
             elif command_type == 's':
                 self.command_storage(value1)
             elif command_type == 'w':
+                # self.logger.info(f"Execute wait: {command_type} {value1}")
                 self.execute_wait(float(value1))
             elif command_type == 'c':
                 self.execute_costmap_clear()
@@ -77,6 +90,15 @@ class ManNav(BaseState):
         elif command == "o":
             self.action_interface('publish_servo_cmd', servo_command=[2.0])
             self.goal_reached = True
+
+    def execute_translation_w_laser(self, distance, max_linear_speed, laser="FRONT_DISTANCE"):
+        if laser == "FRONT_DISTANCE":
+            # self.logger.info(f"Distance left is {self.shared_data.front_distance-distance}")
+            self.execute_translation(self.shared_data.front_distance-distance, max_linear_speed, angular_speed_z=0.0, use_odom=self.use_odom)
+        elif laser == "REAR_DISTANCE":
+            self.execute_translation(self.shared_data.back_distance-distance, max_linear_speed, angular_speed_z=0.0, use_odom=self.use_odom)
+        else:
+            self.logger.info("execute_translation_w_laser: NO SENSOR SPECIFIED")
 
     def execute_wait(self, wait_time):
         if self.wait_start_time is None:

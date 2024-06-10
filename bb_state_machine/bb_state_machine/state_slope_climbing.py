@@ -8,7 +8,6 @@ class SlopeClimbing(BaseState):
         self.distance_limit = distance_limit
         self.angle_limit = angle_limit
         self.direction_up = direction_up
-        # self.switch_map = switch_map
         self.goal_reached = False
         self.start_pose = None
         self.angular_speed_z = angular_speed_z
@@ -27,13 +26,7 @@ class SlopeClimbing(BaseState):
         if self.status == "RUNNING":
             angle_reached = self.check_angle_reached()
             if angle_reached:
-                # if self.switch_map == 'l0':
-                #     self.action_interface('load_map', map_name='map_0')
-                #     self.action_interface('set_initial_pose')
-                # elif self.switch_map == 'l1':
-                #     self.action_interface('load_map', map_name='map_1')
-                #     self.action_interface('set_initial_pose')
-
+                self.logger.info("ANGLE IS REACHED")
                 self.stop_motion()
                 self.status = "COMPLETED"
                 return
@@ -41,7 +34,9 @@ class SlopeClimbing(BaseState):
             self.execute_translation(self.distance_limit, self.speed, angular_speed_z= self.angular_speed_z, use_odom=True)
             if self.goal_reached:
                 self.stop_motion()
-                self.status = "COMPLETED"
+                self.logger.info("STOPPING MOTION")
+                self.status = "FAILED"
+                return
 
     def reset_navigation_state(self):
         self.goal_reached = True
@@ -49,6 +44,7 @@ class SlopeClimbing(BaseState):
         self.start_pose = None
 
     def check_angle_reached(self):
+        self.logger.info(f"self.shared_data.pitch : {self.shared_data.pitch}")
         if (self.direction_up and self.shared_data.pitch > self.angle_limit) or \
            (not self.direction_up and self.shared_data.pitch < self.angle_limit):
             return True

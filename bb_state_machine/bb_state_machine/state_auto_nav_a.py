@@ -70,7 +70,11 @@ class AutoNavA(BaseState):
         dist_current_target = self.distance_to_current_waypoint()
         
         if self.is_reached(dist_current_target):
-            self.advance_waypoint()
+            check_x, check_y, _ = self.waypoints[self.waypoint_index+1]
+            if not self.shared_data.is_circle_free(check_x, check_y, 5, 50):
+                self.waypoints.pop(self.waypoint_index+1)
+            else:
+                self.advance_waypoint()
         elif self.is_last_waypoint(dist_current_target) and not self.manually_navigating:
             self.start_manual_navigation()
         

@@ -36,6 +36,7 @@ class SharedData:
         self._costmap = None
 
         self._front_distance = None
+        self._rear_distance = None
 
     @property
     def x(self):
@@ -106,6 +107,10 @@ class SharedData:
         return self._current_zone
     
     @property
+    def zone_2(self):
+        return self._zone_2
+    
+    @property
     def zone_3(self):
         return self._zone_3
     
@@ -120,6 +125,10 @@ class SharedData:
     @property
     def front_distance(self):
         return self._front_distance
+    
+    @property
+    def rear_distance(self):
+        return self._rear_distance
 
     def update_position(self, x, y, theta):
         self._x = x
@@ -167,6 +176,9 @@ class SharedData:
 
     def update_front_distance(self, front_distance):
         self._front_distance = front_distance
+
+    def update_rear_distance(self, rear_distance):
+        self._rear_distance = rear_distance
 
     def is_circle_free(self, x, y, r, threshold):
         if self.costmap is None:
