@@ -28,8 +28,8 @@ class StateMachineNode(Node):
 
         self.get_logger().info('Blockbuster State Machine node successfully started')
 
-        self.distance_threshold = 0.3
-        self.alpha = 0.5
+        self.distance_threshold = 0.25
+        self.alpha = 0.7
         self.display_marker = False
 
         self.decrease_freq_count = 0
@@ -88,11 +88,10 @@ class StateMachineNode(Node):
         self.navigator.waitUntilNav2Active()
 
     def _init_state_machine(self):
-        self.state_machine = RobotStateMachine(self.get_logger())
+        self.state_machine = RobotStateMachine(self.get_logger(), self.shared_data)
         self.state_machine.add_mission("MISSION_1", Mission1("MISSION_1", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_2", Mission2("MISSION_2", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.add_mission("MISSION_3", Mission3("MISSION_3", self.shared_data, self.perform_action, self.get_logger()))
-        self.state_machine.add_mission("MISSION_4", Mission3("MISSION_4", self.shared_data, self.perform_action, self.get_logger()))
         self.state_machine.set_mission("MISSION_1")
 
     def timer_tf_callback(self):
@@ -120,10 +119,14 @@ class StateMachineNode(Node):
         self.shared_data.update_costmap(costmap)
 
     def timer_sm_callback(self):
+        self.shared_data.update_delta_time()
+        # self.get_logger().info(f"self.shared_data.delta_time : {self.shared_data.delta_time}")
+        # self.get_logger().info(f"self.shared_data.duplo_left_z3 : {self.shared_data.duplo_left_z3}")
         self.state_machine.execute()
 
     def imu_callback(self, msg):
         pitch, _, _ = quaternion_to_euler(msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w)
+        # self.get_logger().info(f"pitch : {pitch}")
         self.shared_data.update_pitch(pitch)
 
     def sys_info_callback(self, msg):
@@ -181,49 +184,6 @@ class StateMachineNode(Node):
                 self.get_logger().info(f'Could not transform oak_rgb_camera_optical_frame to base_link: {ex}')
 
         self._publish_markers_if_enabled(detection_dict)
-
-    # def yolov6_callback(self, msg):
-    #     detection_dict = self.shared_data.detection_dict
-    #     for detection in msg.detections:
-    #         # self.get_logger().info(f"detection: {detection}")
-
-    #         point_in_base_frame = None
-    #         try:
-    #             point_in_camera_frame = PointStamped()
-    #             point_in_camera_frame.header.frame_id = "oak_rgb_camera_optical_frame"
-    #             point_in_camera_frame.header.stamp = msg.header.stamp
-    #             point_in_camera_frame.point.x = detection.position.x
-    #             point_in_camera_frame.point.y = detection.position.y
-    #             point_in_camera_frame.point.z = detection.position.z
-    #             point_in_base_frame = self.tf_buffer.transform(point_in_camera_frame, "map", rclpy.duration.Duration(seconds=0.5))
-    #         except TransformException as ex:
-    #             self.get_logger().info(f'Could not transform oak_rgb_camera_optical_frame to base_link: {ex}')
-
-    #         if point_in_base_frame:
-    #             # self.get_logger().info(f"point_in_base_frame: {point_in_base_frame}")
-
-    #             # if point_in_base_frame.point.z < -0.05 or point_in_base_frame.point.z > 0.15:
-    #             #     continue
-
-    #             object_position = (point_in_base_frame.point.x, point_in_base_frame.point.y)
-
-    #             already_stored = False
-    #             for object_id, stored_position in detection_dict.items():
-    #                 distance = np.sqrt((stored_position[0] - object_position[0])**2 + (stored_position[1] - object_position[1])**2)
-    #                 if distance < self.distance_threshold:
-    #                     already_stored = True
-    #                     ema_position = [(self.alpha * object_position[j] + (1 - self.alpha) * stored_position[j]) for j in range(2)]
-    #                     detection_dict[object_id] = tuple(ema_position)
-    #                     break
-
-    #             if not already_stored and not self.shared_data.is_circle_free(object_position[0], object_position[1], 0, 150):
-    #                 detection_dict[self.get_new_detection_id(detection_dict)] = object_position
-
-    #             self.shared_data.update_detection_dict(detection_dict)
-        
-    #     self.get_logger().info(f"Duplos dict: {self.shared_data.detection_dict}")
-
-    #     self._publish_markers_if_enabled(detection_dict)
 
     def _publish_markers_if_enabled(self, detection_dict):
         if self.display_marker:
@@ -292,11 +252,6 @@ class StateMachineNode(Node):
         goal_pose.pose.orientation.z = math.sin(float(kwargs.get('goal_theta', 0)) / 2.0)
         goal_pose.pose.orientation.w = math.cos(float(kwargs.get('goal_theta', 0)) / 2.0)
         self.navigator.goToPose(goal_pose)
-
-        # if self.decrease_freq_count % 10 == 0:
-        #     self.navigator.goToPose(goal_pose)
-        # self.decrease_freq_count += 1
-
 
     def _set_initial_pose(self, **kwargs):
         initial_pose = PoseStamped()

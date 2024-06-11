@@ -9,7 +9,7 @@ class AutoNavT(BaseState):
         self.action_interface = action_interface
         self.command_file = shared_data.data_path + filename
         self.target_theta_speed = 0.3
-        self.target_x_speed = 0.3
+        self.target_x_speed = 0.5
         self.zone = zone
         assert zone!=''
         
@@ -75,7 +75,7 @@ class AutoNavT(BaseState):
             # self.rotate_from_start_to_end()
             self.executing_360()
 
-        self.logger.info('-----------------------------------------')
+        # self.logger.info('-----------------------------------------')
 
     def searching_duplo(self):
         self.logger.info(f'Detection {self.shared_data.detection_dict}')
@@ -90,10 +90,10 @@ class AutoNavT(BaseState):
         self.logger.info(f"Current target distance: {dist_current_target}")
 
         if not dist_current_target or dist_current_target > self.distance_threshold:
-            self.logger.info("update_tracking_target")
+            # self.logger.info("update_tracking_target")
             self.update_tracking_target(dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo)
         else:
-            self.logger.info("handle_waypoint_and_duplo_reach")
+            # self.logger.info("handle_waypoint_and_duplo_reach")
             self.handle_waypoint_and_duplo_reach(dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo)
 
     def find_closest_target_dict(self, targets):
@@ -110,7 +110,8 @@ class AutoNavT(BaseState):
             elif self.zone == 'ZONE_1':
                 if is_point_in_zone([target_x, target_y], self.shared_data.zone_3) or \
                     is_point_in_zone([target_x, target_y], self.shared_data.zone_4) or \
-                    is_point_in_zone([target_x, target_y], self.shared_data.zone_2):
+                    is_point_in_zone([target_x, target_y], self.shared_data.zone_2) or \
+                    is_point_in_zone([target_x, target_y], self.shared_data.delivery_zone):
                     continue
             else :
                 self.logger.error("NOT SUPPOSED TO BE HERE")
@@ -128,6 +129,7 @@ class AutoNavT(BaseState):
         for i, target in enumerate(targets):
             target_x, target_y = target
             if not self.shared_data.is_circle_free(target_x, target_y, 0, 240):
+                self.logger.info(f"WAYPOINT CANCELED : {target}")
                 continue
 
             distance = math.sqrt((self.shared_data.x - target_x) ** 2 + (self.shared_data.y - target_y) ** 2)
@@ -156,11 +158,11 @@ class AutoNavT(BaseState):
             if tracking == "WP":
                 self.tracking_id = i_closest_waypoint
                 target_x, target_y = self.waypoints[self.tracking_id]
-                self.logger.info(f"Tracking waypoint: {target_x}, {target_y}")
+                # self.logger.info(f"Tracking waypoint: {target_x}, {target_y}")
             else:
                 self.tracking_id = i_closest_duplo
                 target_x, target_y = self.shared_data.detection_dict[self.tracking_id]
-                self.logger.info(f"Tracking duplo: {target_x}, {target_y}")
+                # self.logger.info(f"Tracking duplo: {target_x}, {target_y}")
             self.action_interface('navigate_to_pose', goal_x=target_x, goal_y=target_y, goal_theta=0)
         else:
             self.status = "COMPLETED"
@@ -178,29 +180,34 @@ class AutoNavT(BaseState):
     def handle_waypoint_and_duplo_reach(self, dist_closest_waypoint, i_closest_waypoint, dist_closest_duplo, i_closest_duplo):
 
         if dist_closest_waypoint <= self.distance_threshold and not self.target_locked:
-            self.logger.info("handle_waypoint_reach")
+            # self.logger.info("handle_waypoint_reach")
             self.handle_waypoint_reach(i_closest_waypoint)
         if dist_closest_duplo <= self.distance_threshold:
-            self.logger.info("handle_duplo_reach")
+            # self.logger.info("handle_duplo_reach")
             self.handle_duplo_reach(i_closest_duplo)
 
     def handle_waypoint_reach(self, i_closest_waypoint):
         if self.tracking == "WP":
-            self.logger.info(f"i_closest_waypoint: {i_closest_waypoint}, self.tracking_id: {self.tracking_id}")
-            assert i_closest_waypoint == self.tracking_id
-            self.logger.info(f"Waypoint reached: {self.waypoints[self.tracking_id]}")
-            self.action_interface('abort_navigation')
-            if self.spin_in_place[self.tracking_id] == 1:
-                self.state = "ROTATION"
-            elif self.spin_in_place[self.tracking_id] == 2:
-                self.angle_range = self.angle_range_list[self.tracking_id]
-                self.state = "ROTATE_ANGLE"
-            self.waypoints.pop(self.tracking_id)
-            self.distance_threshold_wp.pop(self.tracking_id)
-            self.spin_in_place.pop(self.tracking_id)    
-            # self.angle_range_list.pop(self.tracking_id)   
-            self.tracking = None
-            self.tracking_id = None
+            # self.logger.info(f"i_closest_waypoint: {i_closest_waypoint}, self.tracking_id: {self.tracking_id}")
+            # assert i_closest_waypoint == self.tracking_id
+            if i_closest_waypoint == self.tracking_id:
+                # self.logger.info(f"Waypoint reached: {self.waypoints[self.tracking_id]}")
+                self.action_interface('abort_navigation')
+                if self.spin_in_place[self.tracking_id] == 1:
+                    self.state = "ROTATION"
+                elif self.spin_in_place[self.tracking_id] == 2:
+                    self.angle_range = self.angle_range_list[self.tracking_id]
+                    self.state = "ROTATE_ANGLE"
+                self.waypoints.pop(self.tracking_id)
+                self.distance_threshold_wp.pop(self.tracking_id)
+                self.spin_in_place.pop(self.tracking_id)    
+                # self.angle_range_list.pop(self.tracking_id)   
+                self.tracking = None
+                self.tracking_id = None
+            else:
+                self.logger.info(f"NOT SUPPOSED TO BE HERE : i_closest_waypoint != self.tracking_id")
+                self.tracking = None
+                self.tracking_id = None
 
         elif self.tracking == "DP":
             self.waypoints.pop(i_closest_waypoint)
@@ -243,15 +250,21 @@ class AutoNavT(BaseState):
         self.start_pose = None
         self.target_locked = False
         self.alpha_rotation = None
-        self.logger.info(f"i_closest_duplo: {i_closest_duplo}, self.tracking_id: {self.tracking_id}")
-        assert i_closest_duplo == self.tracking_id
-        self.logger.info(f"Duplo reached: {self.shared_data.detection_dict[i_closest_duplo]}")
-        del self.shared_data.detection_dict[i_closest_duplo]
-        self.tracking = None
-        self.tracking_id = None
+        # self.logger.info(f"i_closest_duplo: {i_closest_duplo}, self.tracking_id: {self.tracking_id}")
+        # assert i_closest_duplo == self.tracking_id
+        if i_closest_duplo == self.tracking_id:
+            # self.logger.info(f"Duplo reached: {self.shared_data.detection_dict[i_closest_duplo]}")
+            del self.shared_data.detection_dict[i_closest_duplo]
+            self.tracking = None
+            self.tracking_id = None
+        else:
+            self.logger.info(f"NOT SUPPOSED TO BE HERE : i_closest_duplo != self.tracking_id")
+            self.tracking = None
+            self.tracking_id = None
+
 
     def executing_360(self):
-        target_increment = np.pi / 3
+        target_increment = np.pi / 5
         if self.rotation_target is None:
             self.rotation_accumulated = 0
             self.rotation_target = (self.shared_data.theta + target_increment) % (2 * np.pi)

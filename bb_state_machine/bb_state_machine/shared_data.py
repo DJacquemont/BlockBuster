@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 """
 This class is used to store shared data between the different states of the robot.
@@ -6,6 +7,10 @@ This class is used to store shared data between the different states of the robo
 class SharedData:
     def __init__(self):
         self._data_path = None
+
+        self._start_time = time.time()
+        self._delta_time = 0
+        self._limit_time = 600
         
         self._x = 0
         self._y = 0
@@ -22,7 +27,7 @@ class SharedData:
 
         self._duplos_collected = 0
         self._duplos_stored = 0
-        self._max_duplos_stored = 4
+        self._max_duplos_stored = 3
 
         self._duplos_left_z3 = 6
         self._duplos_left_z4 = 6
@@ -32,11 +37,20 @@ class SharedData:
         self._zone_2 = [0.0, -7.5, 1.9, -4.1]
         self._zone_3 = [4.5, -2.5, 7.5, 0.5]
         self._zone_4 = [4.5, -7.5, 7.5, -5.5]
+        self._delivery_zone = [-0.5, -1.5, 1.5, 0.5]
 
         self._costmap = None
 
         self._front_distance = None
         self._rear_distance = None
+
+    @property
+    def delta_time(self):
+        return self._delta_time
+    
+    @property
+    def limit_time(self):
+        return self._limit_time        
 
     @property
     def x(self):
@@ -119,6 +133,10 @@ class SharedData:
         return self._zone_4
     
     @property
+    def delivery_zone(self):
+        return self._delivery_zone
+    
+    @property
     def costmap(self):
         return self._costmap
     
@@ -129,6 +147,9 @@ class SharedData:
     @property
     def rear_distance(self):
         return self._rear_distance
+    
+    def update_delta_time(self):
+        self._delta_time = time.time() - self._start_time
 
     def update_position(self, x, y, theta):
         self._x = x
@@ -159,6 +180,9 @@ class SharedData:
 
     def reset_duplos_stored(self):
         self._duplos_stored = 0
+
+    def set_max_duplos_stored(self, max_duplos_stored):
+        self._max_duplos_stored = max_duplos_stored
 
     def update_duplos_left(self):
         if self.current_zone == 'ZONE_1':

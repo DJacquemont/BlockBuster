@@ -2,10 +2,11 @@
 This class is used to store the different states of the robot.
 """
 class RobotStateMachine:
-    def __init__(self, logger):
+    def __init__(self, logger, shared_data):
         self.missions = {}
         self.current_mission = None
         self.logger = logger
+        self.shared_data = shared_data
         self.status = "RUNNING"
 
     def add_mission(self, name, mission):
@@ -31,24 +32,28 @@ class RobotStateMachine:
     def determine_next_state(self):
         
         current_name = self.current_mission.name
-        # self.status = "COMPLETED"
-        # self.logger.info("All missions completed.")
         
-        if current_name == "MISSION_1":
-            return "MISSION_3"
+        # if current_name == "MISSION_1":
+        #     return "MISSION_3"
+        
+        # elif current_name == "MISSION_2":
+        #     return "MISSION_4"
 
-        elif current_name == "MISSION_3":
+        # elif current_name == "MISSION_3":
+        #     if self.shared_data.delta_time < 480:
+        #         return "MISSION_2"
+        #     else:
+        #         return "MISSION_4"
+
+        if current_name == "MISSION_1":
+            self.shared_data.set_max_duplos_stored(3)
             return "MISSION_2"
         
         elif current_name == "MISSION_2":
-            return "MISSION_4"
+            self.shared_data.set_max_duplos_stored(5)
+            return "MISSION_3"
         
-        elif current_name == "MISSION_4":
+        elif current_name == "MISSION_3":
             self.status = "COMPLETED"
             self.logger.info("All missions completed.")
             return None
-        
-        # else:
-        #     self.status = "COMPLETED"
-        #     self.logger.info("All missions completed.")
-        #     return None
