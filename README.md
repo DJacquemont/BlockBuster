@@ -52,7 +52,7 @@ docker pull jacquemont/robot_os
 
 2. Run the Docker container:
 ```
-sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb -v /home/jetson/colcon_ws/src:/root/colcon_ws/src jacquemont/robot_os bash
+sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb -v /home/raspberry/colcon_ws/src:/root/colcon_ws/src jacquemont/robot_os bash
 ```
 
 3. Open the robot software startup menu in the docker container:
@@ -74,7 +74,7 @@ mkdir -p ~/colcon_ws/src && cd ~/colcon_ws/src
 
 2. Clone the repository with the submodules:
 ```
-git clone --recursive git@github.com:DJacquemont/blockbuster.git .
+git clone --recursive git@github.com:DJacquemont/BlockBuster.git .
 ```
 
 4. Build the workspace:
