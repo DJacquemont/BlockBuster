@@ -1,7 +1,6 @@
-from bb_state_machine.base_state import BaseState
+from blockbuster_sm.base_state import BaseState
 import math
 import numpy as np
-from typing import List, Tuple, Optional
 
 class AutoNavA(BaseState):
     def __init__(self, name: str, shared_data, action_interface, logger, filename: str):
@@ -24,10 +23,6 @@ class AutoNavA(BaseState):
         commands = self.load_data(self.command_file, "waypoints_a")
         self.waypoints = [command[:3] for command in commands]
         self.distance_threshold_wp = [command[3] for command in commands]
-
-        self.logger.info(f'commands : {commands}')
-        self.logger.info(f'self.waypoints : {self.waypoints}')
-        self.logger.info(f'self.distance_threshold_wp : {self.distance_threshold_wp}')
 
         if self.waypoints:
             self.set_current_waypoint()
@@ -83,14 +78,14 @@ class AutoNavA(BaseState):
         else:
             self.perform_auto_navigation()        
     
-    def distance_to_current_waypoint(self) -> float:
+    def distance_to_current_waypoint(self):
         return math.sqrt((self.shared_data.x - self.current_waypoint[0]) ** 2 + 
                          (self.shared_data.y - self.current_waypoint[1]) ** 2)
 
-    def is_reached(self, distance: float) -> bool:
+    def is_reached(self, distance):
         return distance < self.distance_threshold_wp[self.waypoint_index] and self.waypoint_index < len(self.waypoints) - 1
 
-    def is_last_waypoint(self, distance: float) -> bool:
+    def is_last_waypoint(self, distance):
         return distance < self.distance_threshold_wp[self.waypoint_index] and self.waypoint_index == len(self.waypoints) - 1
 
     def advance_waypoint(self):

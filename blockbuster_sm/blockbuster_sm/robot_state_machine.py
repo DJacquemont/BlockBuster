@@ -1,6 +1,3 @@
-"""
-This class is used to store the different states of the robot.
-"""
 class RobotStateMachine:
     def __init__(self, logger, shared_data):
         self.missions = {}
@@ -32,18 +29,6 @@ class RobotStateMachine:
     def determine_next_state(self):
         
         current_name = self.current_mission.name
-        
-        # if current_name == "MISSION_1":
-        #     return "MISSION_3"
-        
-        # elif current_name == "MISSION_2":
-        #     return "MISSION_4"
-
-        # elif current_name == "MISSION_3":
-        #     if self.shared_data.delta_time < 480:
-        #         return "MISSION_2"
-        #     else:
-        #         return "MISSION_4"
 
         if current_name == "MISSION_1":
             self.shared_data.set_max_duplos_stored(3)

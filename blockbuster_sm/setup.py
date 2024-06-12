@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import setup, find_packages
 
-package_name = 'bb_state_machine'
+package_name = 'blockbuster_sm'
 
 setup(
     name=package_name,
@@ -27,7 +27,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'bb_state_machine_node = bb_state_machine.bb_state_machine_node:main'
+            'blockbuster_sm_node = blockbuster_sm.blockbuster_sm_node:main'
         ],
     },
 )

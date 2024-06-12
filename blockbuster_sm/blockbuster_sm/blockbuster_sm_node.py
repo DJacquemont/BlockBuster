@@ -2,10 +2,10 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
-from bb_state_machine.missions import Mission1, Mission2, Mission3
-from bb_state_machine.shared_data import SharedData
-from bb_state_machine.robot_state_machine import RobotStateMachine
-from bb_state_machine.utils import quaternion_to_euler, is_point_in_zone
+from blockbuster_sm.missions import Mission1, Mission2, Mission3
+from blockbuster_sm.shared_data import SharedData
+from blockbuster_sm.robot_state_machine import RobotStateMachine
+from blockbuster_sm.utils import quaternion_to_euler, is_point_in_zone
 from geometry_msgs.msg import Twist, PointStamped, PoseStamped, WrenchStamped
 from std_msgs.msg import Empty, Float64MultiArray
 from nav_msgs.msg import Odometry
@@ -37,7 +37,6 @@ class StateMachineNode(Node):
         self._declare_parameters()
         self._init_shared_data()
 
-        # Create callback groups
         self._priority_callback_group = MutuallyExclusiveCallbackGroup()
         self._default_callback_group = MutuallyExclusiveCallbackGroup()
 
@@ -53,7 +52,7 @@ class StateMachineNode(Node):
         super().destroy_node()
 
     def _declare_parameters(self):
-        self.declare_parameter('data_path', '/src/bb_state_machine/config')
+        self.declare_parameter('data_path', '/src/blockbuster_sm/config')
 
     def _init_shared_data(self):
         self.shared_data = SharedData()
@@ -84,7 +83,6 @@ class StateMachineNode(Node):
 
     def _init_navigator(self):
         self.navigator = BasicNavigator()
-        # self.navigator.get_logger().set_level(rclpy.logging.LoggingSeverity.FATAL)
         self.navigator.waitUntilNav2Active()
 
     def _init_state_machine(self):
@@ -120,13 +118,10 @@ class StateMachineNode(Node):
 
     def timer_sm_callback(self):
         self.shared_data.update_delta_time()
-        # self.get_logger().info(f"self.shared_data.delta_time : {self.shared_data.delta_time}")
-        # self.get_logger().info(f"self.shared_data.duplo_left_z3 : {self.shared_data.duplo_left_z3}")
         self.state_machine.execute()
 
     def imu_callback(self, msg):
         pitch, _, _ = quaternion_to_euler(msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w)
-        # self.get_logger().info(f"pitch : {pitch}")
         self.shared_data.update_pitch(pitch)
 
     def sys_info_callback(self, msg):

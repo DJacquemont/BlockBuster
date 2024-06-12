@@ -105,11 +105,9 @@ class BaseState(ABC):
                     
                     if data_type == 'waypoints_t':
                         if len(line) == 4:
-                            target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3]), None, None))
-                        elif len(line) == 6:
-                            target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3]), float(line[4]), float(line[5])))
+                            target_list.append((float(line[0]), float(line[1]), float(line[2]), int(line[3])))
                         else:
-                            self.logger.error(f"Malformed line in command file, expected 4 or 6 elements but got {len(line)}: {line}")
+                            self.logger.error(f"Malformed line in command file, expected 4 elements but got {len(line)}: {line}")
 
                     elif data_type == 'commands':
                         if len(line) == 2:
@@ -123,10 +121,7 @@ class BaseState(ABC):
 
                     elif data_type == 'waypoints_a':
                         if len(line) == 4:
-                            try:
-                                target_list.append((float(line[0]), float(line[1]), float(line[2]), float(line[3])))
-                            except ValueError:
-                                self.logger.error(f"Invalid number format in line: {line}")
+                            target_list.append((float(line[0]), float(line[1]), float(line[2]), float(line[3])))
                         else:
                             self.logger.error(f"Malformed line in command file, expected 3 elements but got {len(line)}: {line}")
 

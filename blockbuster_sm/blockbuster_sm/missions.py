@@ -1,8 +1,8 @@
-from bb_state_machine.state_auto_nav_a import AutoNavA
-from bb_state_machine.state_auto_nav_t import AutoNavT
-from bb_state_machine.state_slope_climbing import SlopeClimbing
-from bb_state_machine.state_man_nav import ManNav
-from bb_state_machine.super_sate import SuperState
+from blockbuster_sm.state_auto_nav_a import AutoNavA
+from blockbuster_sm.state_auto_nav_t import AutoNavT
+from blockbuster_sm.state_slope_climbing import SlopeClimbing
+from blockbuster_sm.state_man_nav import ManNav
+from blockbuster_sm.super_sate import SuperState
 
 class Mission1(SuperState):
     def __init__(self, name, shared_data, action_interface, logger):
@@ -44,9 +44,6 @@ class Mission1(SuperState):
                 return None
 
         elif current_ss_name == "SEARCH_Z3":
-            self.logger.info(f"current_ss_name {current_ss_name}, current_ss_status {current_ss_status}")
-            self.logger.info(f"self.shared_data.duplos_stored {self.shared_data.duplos_stored}")
-            self.logger.info(f"self.shared_data.duplo_left_z3 {self.shared_data.duplo_left_z3}")
             if current_ss_status == "STORAGE_FULL":
                 self.zone_3_nb_explore += 1
                 return "OUT_Z3"
@@ -112,9 +109,6 @@ class Mission2(SuperState):
     def determine_next_state(self):
         current_ss_name = self.current_substate.name
         current_ss_status = self.current_substate.status
-
-        self.logger.info(f"current_ss_name {current_ss_name}, current_ss_status {current_ss_status}")
-        self.logger.info(f"self.shared_data.duplo_left_z3 {self.shared_data.duplo_left_z4}")
 
         if current_ss_name == "GOTO_Z4" and current_ss_status == "COMPLETED":
             if self.shared_data.duplos_stored >= 3:
@@ -206,11 +200,12 @@ class Mission3(SuperState):
         self.default_substate = "SEARCH_Z1"
 
         self.mission_3_completed = False
+        self.return_time = 550
 
     def execute(self):
         if self.current_substate and self.status == "RUNNING":
 
-            if self.shared_data.delta_time > 550 :
+            if self.shared_data.delta_time > self.return_time :
                 if self.current_substate.name == "SEARCH_Z1":
                     self.set_substate("HOMING")
                     self.mission_3_completed = True

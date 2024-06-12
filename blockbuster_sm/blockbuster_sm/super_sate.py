@@ -1,7 +1,5 @@
-from bb_state_machine.base_state import BaseState
-"""
-This class is used to store the different super-states (Missions) of the robot.
-"""
+from blockbuster_sm.base_state import BaseState
+
 class SuperState(BaseState):
     def __init__(self, name, shared_data, action_interface, logger):
         super().__init__(name, shared_data, action_interface, logger)

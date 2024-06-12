@@ -1,4 +1,4 @@
-from bb_state_machine.base_state import BaseState
+from blockbuster_sm.base_state import BaseState
 
 class SlopeClimbing(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, speed=0.3, distance_limit=3.0, angle_limit=0.0, angular_speed_z = 0.0, direction_up=True):
@@ -40,11 +40,9 @@ class SlopeClimbing(BaseState):
 
     def reset_navigation_state(self):
         self.goal_reached = True
-        # self.switch_map = False
         self.start_pose = None
 
     def check_angle_reached(self):
-        self.logger.info(f"self.shared_data.pitch : {self.shared_data.pitch}")
         if (self.direction_up and self.shared_data.pitch > self.angle_limit) or \
            (not self.direction_up and self.shared_data.pitch < self.angle_limit):
             return True
