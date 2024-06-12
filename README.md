@@ -1,6 +1,7 @@
 # BlockBuster
+![Docker CI](https://github.com/DJacquemont/BlockBuster/actions/workflows/docker-ci.yml/badge.svg)
 
-Code implementation for our robot competing in the EPFL Robotic Competition (MAKE Project 10 ECTS).
+Code implementation for our robot competing in the [EPFL Robotic Competition](https://robot-competition.epfl.ch/).
 
 <p align="center">
   <img src="images/coolgif.gif" width="30%">
