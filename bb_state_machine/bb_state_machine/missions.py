@@ -91,7 +91,7 @@ class Mission2(SuperState):
         self.add_substate("SEARCH_Z4", AutoNavT("SEARCH_Z4", self.shared_data, action_interface, logger, filename="/mission2/m2_search_z4.csv", zone='ZONE_4'))
         self.add_substate("SEARCH_Z1", AutoNavT("SEARCH_Z1", self.shared_data, action_interface, logger, filename="/mission2/m2_search_z1.csv", zone='ZONE_1'))
         self.add_substate("GOTO_Z4", AutoNavA("GOTO_Z4", self.shared_data, action_interface, logger, filename="/mission2/m2_goto_z4.csv"))
-        self.add_substate("SLOPE_UP_1", SlopeClimbing("SLOPE_UP_1", self.shared_data, action_interface, logger, speed=0.5, angle_limit=1.5, angular_speed_z = 0.08, direction_up=True))
+        self.add_substate("SLOPE_UP_1", SlopeClimbing("SLOPE_UP_1", self.shared_data, action_interface, logger, speed=0.35, angle_limit=1.5, angular_speed_z = 0.08, direction_up=True))
         self.add_substate("SLOPE_UP_2", SlopeClimbing("SLOPE_UP_2", self.shared_data, action_interface, logger, speed=0.5, angle_limit=1.5, angular_speed_z = 0.08, direction_up=False))
         self.add_substate("RECOVERY_BEHAVIOR", ManNav("RECOVERY_BEHAVIOR", self.shared_data, action_interface, logger, use_odom = True, filename="/mission2/m2_recovery_behavior.csv"))
         self.add_substate("CALIBRATING", ManNav("CALIBRATING", self.shared_data, action_interface, logger, use_odom = True, filename="/mission2/m2_calibrating.csv"))
@@ -210,9 +210,10 @@ class Mission3(SuperState):
     def execute(self):
         if self.current_substate and self.status == "RUNNING":
 
-            if self.shared_data.delta_time > 550 and \
-                self.current_substate.current_ss_name == "SEARCH_Z1":
+            if self.shared_data.delta_time > 550 :
+                if self.current_substate.name == "SEARCH_Z1":
                     self.set_substate("HOMING")
+                    self.mission_3_completed = True
 
             self.current_substate.execute()
             if self.current_substate.status != 'RUNNING':
@@ -237,7 +238,11 @@ class Mission3(SuperState):
                     return "HOMING"
                 
         elif current_ss_name == "HOMING" and current_ss_status == "COMPLETED":
-            return "UNLOADING"
+            if self.shared_data.duplos_stored >= 0:
+                return "UNLOADING"
+            else:
+                self.status = "COMPLETED"
+                return None
         
         elif current_ss_name == "UNLOADING" and current_ss_status == "COMPLETED":
             if self.mission_3_completed:
