@@ -7,7 +7,7 @@ on:
 
   # push:
   #   branches:
-  #     - sm_dev
+  #     - test_feat
       # - nav_test
       # - main
 

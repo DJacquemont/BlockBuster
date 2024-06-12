@@ -10,27 +10,31 @@ Code implementation for our robot competing in the EPFL Robotic Competition (MAK
 
 ### Prerequisites
 
+Software requirements:
 - Ubuntu 22.04
 - ROS2 Humble
 - Gazebo 11
 - Python 3.10
+- Docker
 
-### 1. Nvidia Jetson Nano Connection
+Hardware requirements:
+- Raspberry Pi 5 (or equivalent)
 
-#### 1.1 Wireless Connection
 
-1. Connect to the zerotier network (ID: `856127940c82f9a4`):
+### 1. Onboard Computer Wireless Connection
+
+1. OPTIONAL - Connect to the zerotier network (ID: `856127940c82f9a4`):
 ```
 sudo zerotier-cli join 856127940c82f9a4
 ```
 
-2. SSH into the Jetson Nano:
+2. SSH into the onboard computer:
 ```
-ssh jetson@nano.local
-psswd: jetson
+raspberry@172.27.27.207
+psswd: pi
 ```
 
-3. Shutdown Jetson Nano:
+3. Shutdown onboard computer:
 ```
 sudo poweroff
 ```
@@ -39,17 +43,7 @@ sudo poweroff
 sudo zerotier-cli leave 856127940c82f9a4
 ```
 
-#### 1.2 Wired Connection (Ethernet)
-
-1. Connect the Jetson Nano to the laptop with an Ethernet cable.
-
-2. SSH into the Jetson Nano:
-```
-ssh jetson@192.168.1.100
-psswd: jetson
-```
-
-### 2. Docker Container Setup (Run ROS2 on Jetson Nano)
+### 2. Docker Container Setup (Run ROS2 in Docker)
 
 1. OPTIONAL - Pull the Docker image from Docker Hub (if not already done):
 ```
@@ -63,17 +57,12 @@ sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb -v
 
 3. Open the robot software startup menu in the docker container:
 ```
-bash robot_start.sh
+./robot_start.sh
 ```
 
 4. OPTIONAL - Open a new terminal in the Docker container:
 ```
 sudo docker exec -it $(sudo docker ps -aqf "ancestor=jacquemont/robot_os") bash
-```
-
-4. Exit Docker container:
-```
-ctrl -D
 ```
 
 ### 3. Local Machine Setup (Run ROS2 locally)
@@ -99,13 +88,12 @@ colcon build --symlink-install
 ```
 source ~/colcon_ws/install/setup.bash
 ```
-Once the workspace is built, the ROS2 nodes can be run.
 
 ## Getting Started
 
 ### 1. Robot HARDWARE
 
-To start the robot hardware (once the robot's hardware is connected to the laptop), execute the file `robot_start.sh`, or run the following command:
+To start the robot hardware, execute the file `robot_start.sh` once connected to the onboard computer, or run the following command:
 ```
 ros2 launch blockbuster_core launch_robot.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
 ```
