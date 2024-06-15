@@ -3,7 +3,8 @@
 Code implementation for our robot competing in the EPFL Robotic Competition (MAKE Project 10 ECTS).
 
 <p align="center">
-  <img src="images/coolgif.gif" width="30%">
+  <img src="images/GIF1.GIF" width="45%" style="margin-right: 2.5%;" />
+  <img src="images/GIF2.GIF" width="45%" style="margin-left: 2.5%;" />
 </p>
 
 ## Installation

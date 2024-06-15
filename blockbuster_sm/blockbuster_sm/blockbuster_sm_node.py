@@ -28,11 +28,7 @@ class StateMachineNode(Node):
 
         self.get_logger().info('Blockbuster State Machine node successfully started')
 
-        self.distance_threshold = 0.25
-        self.alpha = 0.7
         self.display_marker = False
-
-        self.decrease_freq_count = 0
 
         self._declare_parameters()
         self._init_shared_data()
@@ -44,9 +40,9 @@ class StateMachineNode(Node):
         self._init_timers()
         self._init_tf_listener()
         self._init_navigator()
-        self._init_state_machine()
-
         self.get_logger().info('Done initializing !!')
+
+        self._init_state_machine()
 
     def destroyNode(self):
         super().destroy_node()
@@ -142,7 +138,12 @@ class StateMachineNode(Node):
 
 
     def yolov6_callback(self, msg):
+
+        distance_threshold = 0.25
+        alpha = 0.7
+
         detection_dict = self.shared_data.detection_dict
+
         for detection in msg.detections:
             try:
                 point_in_camera_frame = PointStamped()
@@ -161,9 +162,9 @@ class StateMachineNode(Node):
                 already_stored = False
                 for object_id, stored_position in detection_dict.items():
                     distance = np.sqrt((stored_position[0] - object_position[0])**2 + (stored_position[1] - object_position[1])**2)
-                    if distance < self.distance_threshold:
+                    if distance < distance_threshold:
                         already_stored = True
-                        ema_position = [(self.alpha * object_position[j] + (1 - self.alpha) * stored_position[j]) for j in range(2)]
+                        ema_position = [(alpha * object_position[j] + (1 - alpha) * stored_position[j]) for j in range(2)]
                         detection_dict[object_id] = tuple(ema_position)
                         break
 
@@ -178,31 +179,31 @@ class StateMachineNode(Node):
             except TransformException as ex:
                 self.get_logger().info(f'Could not transform oak_rgb_camera_optical_frame to base_link: {ex}')
 
-        self._publish_markers_if_enabled(detection_dict)
+        if self.display_marker:
+            self._publish_markers_if_enabled(detection_dict)
 
     def _publish_markers_if_enabled(self, detection_dict):
-        if self.display_marker:
-            marker_array = MarkerArray()
-            for object_id, position in detection_dict.items():
-                marker = Marker()
-                marker.header.frame_id = "map"
-                marker.type = marker.SPHERE
-                marker.action = marker.ADD
-                marker.pose.position.x = position[0]
-                marker.pose.position.y = position[1]
-                marker.pose.position.z = 0.1
-                marker.pose.orientation.w = 1.0
-                marker.scale.x = 0.1
-                marker.scale.y = 0.1
-                marker.scale.z = 0.1
-                marker.color.a = 0.4
-                marker.color.r = 1.0
-                marker.color.g = 0.0
-                marker.color.b = 0.0
-                marker.id = object_id
-                marker_array.markers.append(marker)
+        marker_array = MarkerArray()
+        for object_id, position in detection_dict.items():
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.type = marker.SPHERE
+            marker.action = marker.ADD
+            marker.pose.position.x = position[0]
+            marker.pose.position.y = position[1]
+            marker.pose.position.z = 0.1
+            marker.pose.orientation.w = 1.0
+            marker.scale.x = 0.1
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
+            marker.color.a = 0.4
+            marker.color.r = 1.0
+            marker.color.g = 0.0
+            marker.color.b = 0.0
+            marker.id = object_id
+            marker_array.markers.append(marker)
 
-            self.marker_pub.publish(marker_array)
+        self.marker_pub.publish(marker_array)
 
     def get_new_detection_id(self, detection_dict):
         all_ids = list(detection_dict.keys())

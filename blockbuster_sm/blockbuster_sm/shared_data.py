@@ -1,6 +1,9 @@
 import numpy as np
 import time
 
+"""
+This class is used to store the shared data of the robot necessary for all the states and substates.
+"""
 class SharedData:
     def __init__(self):
         self._data_path = None

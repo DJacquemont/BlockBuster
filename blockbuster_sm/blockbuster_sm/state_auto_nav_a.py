@@ -2,6 +2,9 @@ from blockbuster_sm.base_state import BaseState
 import math
 import numpy as np
 
+"""
+This class is used to enable the autonomous navigation of the robot through a series of waypoints efficiently.
+"""
 class AutoNavA(BaseState):
     def __init__(self, name: str, shared_data, action_interface, logger, filename: str):
         super().__init__(name, shared_data, action_interface, logger)

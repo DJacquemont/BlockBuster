@@ -1,6 +1,6 @@
 from blockbuster_sm.state_auto_nav_a import AutoNavA
 from blockbuster_sm.state_auto_nav_t import AutoNavT
-from blockbuster_sm.state_slope_climbing import SlopeClimbing
+from blockbuster_sm.state_slope_nav import SlopeNav
 from blockbuster_sm.state_man_nav import ManNav
 from blockbuster_sm.super_sate import SuperState
 
@@ -88,16 +88,16 @@ class Mission2(SuperState):
         self.add_substate("SEARCH_Z4", AutoNavT("SEARCH_Z4", self.shared_data, action_interface, logger, filename="/mission2/m2_search_z4.csv", zone='ZONE_4'))
         self.add_substate("SEARCH_Z1", AutoNavT("SEARCH_Z1", self.shared_data, action_interface, logger, filename="/mission2/m2_search_z1.csv", zone='ZONE_1'))
         self.add_substate("GOTO_Z4", AutoNavA("GOTO_Z4", self.shared_data, action_interface, logger, filename="/mission2/m2_goto_z4.csv"))
-        self.add_substate("SLOPE_UP_1", SlopeClimbing("SLOPE_UP_1", self.shared_data, action_interface, logger, speed=0.35, angle_limit=1.5, angular_speed_z = 0.08, direction_up=True))
-        self.add_substate("SLOPE_UP_2", SlopeClimbing("SLOPE_UP_2", self.shared_data, action_interface, logger, speed=0.5, angle_limit=1.5, angular_speed_z = 0.08, direction_up=False))
+        self.add_substate("SLOPE_UP_1", SlopeNav("SLOPE_UP_1", self.shared_data, action_interface, logger, speed=0.35, angle_limit=1.5, angular_speed_z = 0.08, direction_up=True))
+        self.add_substate("SLOPE_UP_2", SlopeNav("SLOPE_UP_2", self.shared_data, action_interface, logger, speed=0.5, angle_limit=1.5, angular_speed_z = 0.08, direction_up=False))
         self.add_substate("RECOVERY_BEHAVIOR", ManNav("RECOVERY_BEHAVIOR", self.shared_data, action_interface, logger, use_odom = True, filename="/mission2/m2_recovery_behavior.csv"))
         self.add_substate("CALIBRATING", ManNav("CALIBRATING", self.shared_data, action_interface, logger, use_odom = True, filename="/mission2/m2_calibrating.csv"))
         self.add_substate("APPROACH_SLOPE_LOW", ManNav("APPROACH_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/mission2/m2_approach_slope_low.csv"))
         self.add_substate("LEAVE_SLOPE_HIGH", ManNav("LEAVE_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/mission2/m2_leave_slope_high.csv"))
         self.add_substate("GOTO_SLOPE_HIGH", AutoNavA("GOTO_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/mission2/m2_goto_slope_high.csv"))
         self.add_substate("APPROACH_SLOPE_HIGH", ManNav("APPROACH_SLOPE_HIGH", self.shared_data, action_interface, logger, filename="/mission2/m2_approach_slope_high.csv"))
-        self.add_substate("SLOPE_DOWN_1", SlopeClimbing("SLOPE_DOWN_1", self.shared_data, action_interface, logger, speed=0.2, distance_limit=3.0, angle_limit=1.2, angular_speed_z = -0.03, direction_up=False))
-        self.add_substate("SLOPE_DOWN_2", SlopeClimbing("SLOPE_DOWN_2", self.shared_data, action_interface, logger, speed=0.25, distance_limit=2.0, angle_limit=1.2, angular_speed_z = -0.07, direction_up=True))
+        self.add_substate("SLOPE_DOWN_1", SlopeNav("SLOPE_DOWN_1", self.shared_data, action_interface, logger, speed=0.2, distance_limit=3.0, angle_limit=1.2, angular_speed_z = -0.03, direction_up=False))
+        self.add_substate("SLOPE_DOWN_2", SlopeNav("SLOPE_DOWN_2", self.shared_data, action_interface, logger, speed=0.25, distance_limit=2.0, angle_limit=1.2, angular_speed_z = -0.07, direction_up=True))
         self.add_substate("LEAVE_SLOPE_LOW", ManNav("LEAVE_SLOPE_LOW", self.shared_data, action_interface, logger, filename="/mission2/m2_leave_slope_low.csv"))
         self.add_substate("HOMING", AutoNavA("HOMING", self.shared_data, action_interface, logger, filename="/mission2/m2_homing.csv"))
         self.add_substate("UNLOADING", ManNav("UNLOADING", self.shared_data, action_interface, logger, filename="/general/unloading.csv"))
@@ -129,7 +129,7 @@ class Mission2(SuperState):
             if current_ss_status == "COMPLETED":
                 return "LEAVE_SLOPE_HIGH"
             elif current_ss_status == "FAILED":
-                return "RECOVERY_BEHAVIOR"
+                return "RECOAny person taxed at source can request a new tax at source calculation before 31 March of the following tax year. This request concerns only the following cases VERY_BEHAVIOR"
         
         elif current_ss_name == "RECOVERY_BEHAVIOR" and current_ss_status == "COMPLETED":
             if not self.recovery_behavior:
