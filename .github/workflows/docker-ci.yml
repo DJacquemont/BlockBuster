@@ -5,9 +5,9 @@ on:
     branches:
       - main
 
-  # push:
-  #   branches:
-  #     - test_feat
+  push:
+    branches:
+      - final_clean
       # - nav_test
       # - main
 
