@@ -32,8 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Create colcon workspace
 WORKDIR /root/colcon_ws/src
-RUN git clone --recurse-submodules https://github.com/DJacquemont/BlockBuster.git .
-COPY /root/colcon_ws/src/blockbuster_core/config/bt.xml /opt/ros/humble/share/nav2_bt_navigator/behavior_trees/
+RUN git clone --recurse-submodules https://github.com/DJacquemont/BlockBuster.git . && \
+    cp colcon_ws/src/blockbuster_core/config/bt.xml /opt/ros/humble/share/nav2_bt_navigator/behavior_trees/
 
 # Build the workspace
 WORKDIR /root/colcon_ws

@@ -1,11 +1,14 @@
 # BlockBuster
+![Docker CI](https://github.com/DJacquemont/BlockBuster/actions/workflows/docker-ci.yml/badge.svg)
 
-Code implementation for our robot competing in the EPFL Robotic Competition (MAKE Project 10 ECTS).
+Code implementation for our robot competing in the [EPFL Robotic Competition](https://robot-competition.epfl.ch/).
 
 <p align="center">
-  <img src="images/GIF1.GIF" width="45%" style="margin-right: 2.5%;" />
-  <img src="images/GIF2.GIF" width="45%" style="margin-left: 2.5%;" />
+  <img alt="Light" src="images/GIF1.GIF" width="45%">
+&nbsp; &nbsp; &nbsp; &nbsp;
+  <img alt="Dark" src="images/GIF2.GIF" width="45%">
 </p>
+
 
 ## Installation
 
@@ -49,7 +52,7 @@ docker pull jacquemont/robot_os
 
 2. Run the Docker container:
 ```
-sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb -v /home/jetson/colcon_ws/src:/root/colcon_ws/src jacquemont/robot_os bash
+sudo docker run --rm --privileged -it --net=host -v /dev/bus/usb:/dev/bus/usb jacquemont/robot_os bash
 ```
 
 3. Open the robot software startup menu in the docker container:
