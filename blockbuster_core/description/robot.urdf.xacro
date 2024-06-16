@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="robot">
+
+    <xacro:arg name="use_ros2_control" default="true"/>
+    <xacro:arg name="sim_mode" default="false"/>
+
+    <xacro:include filename="robot_core.xacro" />
+    <!-- <xacro:include filename="urdf_blockbuster.xacro" /> -->
+
+    <xacro:if value="$(arg use_ros2_control)">
+        <xacro:include filename="ros2_control.xacro" />
+    </xacro:if>
+    <xacro:unless value="$(arg use_ros2_control)">
+        <xacro:include filename="gazebo_control.xacro" />
+    </xacro:unless>    
+
+    <xacro:include filename="$(find blockbuster_core)/description/depthai_macro.urdf.xacro"/>
+    <xacro:depthai_camera camera_name = "oak" parent = "base_link" camera_model = "OAK-D-LITE" base_frame = "oak-d_frame" cam_pos_x = "0.2616" cam_pos_y = "-0.0001" cam_pos_z = "0.20" cam_roll = "0" cam_pitch = "0.175" cam_yaw = "0"/>
+</robot>
