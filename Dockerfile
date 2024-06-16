@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Create colcon workspace
 WORKDIR /root/colcon_ws/src
-RUN git clone --recurse-submodules https://github.com/DJacquemont/BlockBuster.git .
+RUN git clone --recurse-submodules --branch final_clean https://github.com/DJacquemont/BlockBuster.git .
 
 # Build the workspace
 WORKDIR /root/colcon_ws
