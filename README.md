@@ -11,6 +11,11 @@ Code implementation for our robot competing in the [EPFL Robotic Competition](ht
 
 Complete submission video can be found [here](https://youtu.be/ejofCqsJ4cE).
 
+Some code of this repository was inspired from the following repositories:
+- [articubot_one](https://github.com/joshnewans/articubot_one/tree/main)
+- [diffdrive_arduino](https://github.com/joshnewans/diffdrive_arduino/tree/humble)
+- [depthai-ros](https://github.com/luxonis/depthai-ros)
+
 ## Installation
 
 ### Prerequisites
@@ -28,7 +33,7 @@ Hardware requirements:
 
 ### 1. Onboard Computer Wireless Connection
 
-1. OPTIONAL - Connect to the zerotier network (ID: `856127940c82f9a4`):
+1. OPTIONAL - Connect to the zerotier private network (ID: `856127940c82f9a4`):
 ```
 sudo zerotier-cli join 856127940c82f9a4
 ```
