@@ -9,6 +9,7 @@ Code implementation for our robot competing in the [EPFL Robotic Competition](ht
   <img alt="Dark" src="images/GIF2.GIF" width="45%">
 </p>
 
+Complete submission video can be found [here](https://youtu.be/ejofCqsJ4cE).
 
 ## Installation
 
