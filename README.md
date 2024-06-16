@@ -42,6 +42,10 @@ psswd: pi
 ```
 sudo poweroff
 ```
+4. Disconnect from the zerotier network (ID: `856127940c82f9a4`):
+```
+sudo zerotier-cli leave 856127940c82f9a4
+```
 
 ### 2. Docker Container Setup (Run ROS2 in Docker)
 
@@ -74,7 +78,7 @@ mkdir -p ~/colcon_ws/src && cd ~/colcon_ws/src
 
 2. Clone the repository with the submodules:
 ```
-git clone --recursive git@github.com:DJacquemont/blockbuster.git .
+git clone --recursive git@github.com:DJacquemont/BlockBuster.git .
 ```
 
 4. Build the workspace:
