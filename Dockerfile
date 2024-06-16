@@ -32,12 +32,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Create colcon workspace
 WORKDIR /root/colcon_ws/src
+RUN git clone --recurse-submodules https://github.com/DJacquemont/BlockBuster.git .
+WORKDIR /root/colcon_ws
+RUN /bin/bash -c "cp src/blockbuster_core/config/bt.xml /opt/ros/humble/share/nav2_bt_navigator/behavior_trees/; \
+    source /opt/ros/humble/setup.bash; \
+    colcon build --symlink-install"
 
 # Build the serial library
 WORKDIR /root
 RUN git clone https://github.com/joshnewans/serial.git
 WORKDIR /root/serial
-RUN /bin/bash -c "source /opt/ros/humble/setup.bash; make" && \
+RUN git checkout 2121a37eaa1aff8ca62badc0ac8f43b87169d706 && \
+    /bin/bash -c "source /opt/ros/humble/setup.bash; make" && \
     make install
 
 # .bashrc entries
@@ -45,6 +51,7 @@ RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
     echo 'cd() { builtin cd "$@" && ls; }' >> /root/.bashrc && \
     echo "export ROS_LOCALHOST_ONLY=1" >> /root/.bashrc
 
+WORKDIR /root
 COPY robot_start.sh /root
 RUN chmod +x /root/robot_start.sh
 

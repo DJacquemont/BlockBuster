@@ -3,6 +3,9 @@ import math
 import numpy as np
 from blockbuster_sm.utils import is_point_in_zone
 
+"""
+This class is used to enable the autonomous navigation of the robot through a series of waypoints efficiently while searching and targeting Duplos.
+"""
 class AutoNavT(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename, zone = ''):
         super().__init__(name, shared_data, action_interface, logger)

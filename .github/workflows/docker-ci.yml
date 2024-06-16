@@ -7,7 +7,7 @@ on:
 
   # push:
   #   branches:
-  #     - test_feat
+  #     - final_clean
       # - nav_test
       # - main
 

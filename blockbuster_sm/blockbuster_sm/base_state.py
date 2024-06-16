@@ -3,7 +3,7 @@ import csv
 import numpy as np
 
 """
-This class is used to store the different sub-states of the robot.
+This class is used as a blueprint for all the states in the state machine.
 """
 class BaseState(ABC):
     """
@@ -123,7 +123,7 @@ class BaseState(ABC):
                         if len(line) == 4:
                             target_list.append((float(line[0]), float(line[1]), float(line[2]), float(line[3])))
                         else:
-                            self.logger.error(f"Malformed line in command file, expected 3 elements but got {len(line)}: {line}")
+                            self.logger.error(f"Malformed line in command file, expected 4 elements but got {len(line)}: {line}")
 
                     else:
                         self.logger.error(f"Unknown data type: {data_type}")

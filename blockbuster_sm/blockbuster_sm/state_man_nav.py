@@ -1,6 +1,9 @@
 from blockbuster_sm.base_state import BaseState
 import time
 
+"""
+This class is used to enable the manual navigation of the robot through a series of commands.
+"""
 class ManNav(BaseState):
     def __init__(self, name, shared_data, action_interface, logger, filename, use_odom=False):
         super().__init__(name, shared_data, action_interface, logger)
