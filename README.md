@@ -112,7 +112,7 @@ ros2 launch blockbuster_core launch_robot.launch.py activate_slam:=false activat
 
 To start the robot simulation, run the following command:
 ```
-ros2 launch blockbuster_core launch_sim.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=true
+ros2 launch blockbuster_core launch_sim.launch.py activate_slam:=false activate_nav:=true activate_loc:=true  activate_cam:=true  activate_sm:=false
 ```
 
 ### 3. Other Nodes
