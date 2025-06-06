@@ -129,7 +129,7 @@ class Mission2(SuperState):
             if current_ss_status == "COMPLETED":
                 return "LEAVE_SLOPE_HIGH"
             elif current_ss_status == "FAILED":
-                return "RECOAny person taxed at source can request a new tax at source calculation before 31 March of the following tax year. This request concerns only the following cases VERY_BEHAVIOR"
+                return "RECOVERY_BEHAVIOR"
         
         elif current_ss_name == "RECOVERY_BEHAVIOR" and current_ss_status == "COMPLETED":
             if not self.recovery_behavior:
